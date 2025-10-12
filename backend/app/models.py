@@ -4,18 +4,36 @@ from sqlalchemy.sql import func
 from .database import Base
 
 
+class User(Base):
+    __tablename__ = "users"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    google_id = Column(String, unique=True, nullable=True, index=True)  # Made nullable for basic auth
+    email = Column(String, nullable=False, index=True)
+    name = Column(String, nullable=False)
+    profile_picture = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_login = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    uploads = relationship("Upload", back_populates="user")
+
+
 class Upload(Base):
     __tablename__ = "uploads"
     
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Make nullable for backward compatibility
     filename = Column(String, nullable=False)
     original_filename = Column(String, nullable=False)
     file_path = Column(String, nullable=False)
     file_type = Column(String, nullable=False)  # 'docx' or 'pdf'
     file_size = Column(Integer, nullable=False)
+    language = Column(String, nullable=True)  # 'python', 'java', 'c', 'webdev'
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
+    user = relationship("User", back_populates="uploads")
     jobs = relationship("Job", back_populates="upload")
     reports = relationship("Report", back_populates="upload")
 

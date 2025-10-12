@@ -1,5 +1,6 @@
 import os
 import uuid
+import re
 from typing import List, Dict, Any, Optional
 from docx import Document
 from docx.shared import Inches, Pt
@@ -79,35 +80,183 @@ class ComposerService:
         await self._insert_screenshots_near_questions(doc, tasks_with_screenshots)
     
     async def _insert_screenshots_near_questions(self, doc: Document, tasks_with_screenshots: List[AITask]):
-        """Try to insert screenshots near relevant questions in the document"""
+        """Insert screenshots under relevant questions in the document"""
         
         if not tasks_with_screenshots:
             return
         
-        # Try to find question patterns and insert screenshots after them
-        # Look for common question patterns like "Question 1:", "Task 1:", "1.", etc.
-        question_patterns = [
-            r'Question\s+\d+',
-            r'Task\s+\d+',
-            r'^\d+\.',
-            r'^\d+\)',
-            r'Problem\s+\d+',
-            r'Exercise\s+\d+'
+        # Create a mapping of task numbers to tasks
+        task_mapping = {}
+        for task in tasks_with_screenshots:
+            # Extract task number from brief_description or use sequential numbering
+            task_num = self._extract_task_number(task.brief_description) if task.brief_description else len(task_mapping) + 1
+            task_mapping[task_num] = task
+        
+        # Find all paragraphs and try to insert screenshots after matching questions
+        paragraphs_to_insert = []
+        
+        for i, paragraph in enumerate(doc.paragraphs):
+            text = paragraph.text.strip()
+            if not text:
+                continue
+                
+            # Look for question patterns
+            task_num = self._find_question_pattern(text)
+            if task_num and task_num in task_mapping:
+                task = task_mapping[task_num]
+                # Find the end of this question (look for next numbered question or section)
+                end_index = self._find_question_end_index(doc.paragraphs, i)
+                # Mark this paragraph for screenshot insertion
+                paragraphs_to_insert.append((end_index, task))  # Insert after the question
+                # Remove from mapping to avoid duplicate insertions
+                del task_mapping[task_num]
+        
+        # Insert screenshots after the identified paragraphs (in reverse order to maintain indices)
+        for para_index, task in reversed(paragraphs_to_insert):
+            await self._insert_screenshot_after_paragraph(doc, para_index, task)
+        
+        # Add any remaining screenshots at the end (fallback) - question + screenshot pairs
+        if task_mapping:
+            doc.add_paragraph()
+            doc.add_paragraph("Additional Solutions:")
+            for task_num, task in task_mapping.items():
+                # Add the question text
+                if task.brief_description:
+                    question_para = doc.add_paragraph()
+                    question_para.add_run(f"Question {task_num}: ").bold = True
+                    question_para.add_run(task.brief_description)
+                
+                # Add the screenshot
+                if task.screenshot_path and os.path.exists(task.screenshot_path):
+                    await self._add_screenshot_only_clean(doc, task.screenshot_path, f"Solution {task_num}")
+                
+                # Add small spacing between questions
+                doc.add_paragraph()
+    
+    def _find_question_end_index(self, paragraphs, start_index: int) -> int:
+        """Find where a question ends (next numbered item or section)"""
+        for i in range(start_index + 1, len(paragraphs)):
+            text = paragraphs[i].text.strip()
+            if not text:
+                continue
+            
+            # Check if this is a new numbered question
+            if self._find_question_pattern(text):
+                return i
+            
+            # Check if this is a new section (like "C. Questions:", "A. Theory:", etc.)
+            if re.match(r'^[A-Z]\.\s+[A-Z]', text):
+                return i
+        
+        # If no end found, return the next paragraph index
+        return start_index + 1
+    
+    def _extract_task_number(self, description: str) -> Optional[int]:
+        """Extract task number from description"""
+        if not description:
+            return None
+        
+        # Look for patterns like "Task 1", "Question 1", "1.", etc.
+        patterns = [
+            r'Task\s+(\d+)',
+            r'Question\s+(\d+)',
+            r'Problem\s+(\d+)',
+            r'Exercise\s+(\d+)',
+            r'^(\d+)\.',
+            r'^(\d+)\)'
         ]
         
-        # For now, we'll add screenshots at the end with minimal text
-        # TODO: Implement smarter insertion based on question patterns
-        doc.add_paragraph()
+        for pattern in patterns:
+            match = re.search(pattern, description, re.IGNORECASE)
+            if match:
+                return int(match.group(1))
         
-        for i, task in enumerate(tasks_with_screenshots, 1):
-            await self._add_screenshot_only(doc, task, i)
+        return None
+    
+    def _find_question_pattern(self, text: str) -> Optional[int]:
+        """Find question pattern in text and return task number"""
+        patterns = [
+            r'Question\s+(\d+)',
+            r'Task\s+(\d+)',
+            r'Problem\s+(\d+)',
+            r'Exercise\s+(\d+)',
+            r'^(\d+)\.',                    # "1.Write a Python program..."
+            r'^(\d+)\)',                    # "1) Write a Python program..."
+            r'Q(\d+)',                      # "Q1", "Q2"
+            r'T(\d+)',                      # "T1", "T2"
+            r'^\s*(\d+)\.\s*Write',         # "1. Write a Python program..."
+            r'^\s*(\d+)\)\s*Write',         # "1) Write a Python program..."
+            r'^\s*(\d+)\.\s*[A-Z]',         # "1. Demonstrate", "2. Calculate"
+            r'^\s*(\d+)\)\s*[A-Z]'          # "1) Demonstrate", "2) Calculate"
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
+            if match:
+                return int(match.group(1))
+        
+        return None
+    
+    async def _insert_screenshot_after_paragraph(self, doc: Document, para_index: int, task: AITask):
+        """Insert screenshot after a specific paragraph - only the screenshot, no extra text"""
+        if task.screenshot_path and os.path.exists(task.screenshot_path):
+            # Add the screenshot with minimal caption
+            task_num = self._extract_task_number(task.brief_description)
+            caption = f"Task {task_num}" if task_num else "Code Execution"
+            await self._add_screenshot_only_clean(doc, task.screenshot_path, caption)
     
     async def _add_screenshot_only(self, doc: Document, task: AITask, task_number: int):
         """Add just the screenshot with minimal text"""
         
         # Add screenshot
         if task.screenshot_path and os.path.exists(task.screenshot_path):
-            await self._add_screenshot(doc, task.screenshot_path, f"Task {task_number} Execution")
+            await self._add_screenshot_only_clean(doc, task.screenshot_path, f"Task {task_number}")
+    
+    async def _add_screenshot_only_clean(self, doc: Document, image_path: str, caption: str):
+        """Add only the screenshot with minimal caption - no extra text or formatting"""
+        
+        try:
+            # Get image dimensions
+            with Image.open(image_path) as img:
+                width, height = img.size
+            
+            # Calculate size to fit within document (max 6 inches width)
+            max_width = Inches(6)
+            max_height = Inches(4)
+            
+            # Calculate aspect ratio
+            aspect_ratio = width / height
+            
+            if width > max_width:
+                new_width = max_width
+                new_height = new_width / aspect_ratio
+            else:
+                new_width = Inches(width / 100)  # Convert pixels to inches (approximate)
+                new_height = Inches(height / 100)
+            
+            if new_height > max_height:
+                new_height = max_height
+                new_width = new_height * aspect_ratio
+            
+            # Add image
+            paragraph = doc.add_paragraph()
+            paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            
+            # Add image to paragraph
+            doc.add_picture(image_path, width=new_width, height=new_height)
+            
+            # Add minimal caption
+            caption_para = doc.add_paragraph()
+            caption_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            caption_run = caption_para.add_run(caption)
+            caption_run.font.size = Pt(9)
+            caption_run.font.italic = True
+            
+        except Exception as e:
+            # If image fails to load, add minimal error message
+            error_para = doc.add_paragraph()
+            error_para.add_run(f"Screenshot unavailable")
+            error_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
     
     async def _add_task_section(self, doc: Document, task: AITask, task_number: int):
         """Add a task section with screenshot and details to the document"""

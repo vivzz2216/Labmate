@@ -93,6 +93,7 @@ class AITaskCandidate(BaseModel):
 
 class AnalyzeRequest(BaseModel):
     file_id: int
+    language: Optional[str] = None
 
 
 class AnalyzeResponse(BaseModel):

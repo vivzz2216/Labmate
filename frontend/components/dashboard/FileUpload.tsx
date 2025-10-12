@@ -75,13 +75,13 @@ export default function FileUpload({ onUploadComplete, onError }: FileUploadProp
         animate={{ opacity: 1, scale: 1 }}
         className="space-y-4"
       >
-        <Card className="border-green-200 bg-green-50">
+        <Card className="border-green-500/50 bg-green-500/10">
           <CardContent className="p-6">
             <div className="flex items-center space-x-3">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+              <CheckCircle className="w-8 h-8 text-green-400" />
               <div>
-                <h3 className="font-semibold text-green-800">File Uploaded Successfully!</h3>
-                <p className="text-sm text-green-600">
+                <h3 className="font-semibold text-green-400">File Uploaded Successfully!</h3>
+                <p className="text-sm text-green-300">
                   {uploadedFile.original_filename} ({formatFileSize(uploadedFile.file_size)})
                 </p>
               </div>
@@ -93,13 +93,13 @@ export default function FileUpload({ onUploadComplete, onError }: FileUploadProp
   }
 
   return (
-    <Card>
+    <Card className="bg-gray-900/50 border-white/10">
       <CardContent className="p-8">
         <div
           {...getRootProps()}
           className={`
             border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-            ${isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-gray-400'}
+            ${isDragActive ? 'border-blue-500 bg-blue-500/10' : 'border-white/20 hover:border-white/40'}
             ${uploading ? 'cursor-not-allowed opacity-50' : ''}
           `}
         >
@@ -111,13 +111,13 @@ export default function FileUpload({ onUploadComplete, onError }: FileUploadProp
               animate={{ opacity: 1 }}
               className="space-y-4"
             >
-              <div className="w-16 h-16 mx-auto bg-indigo-100 rounded-full flex items-center justify-center">
-                <Upload className="w-8 h-8 text-indigo-600 animate-pulse" />
+              <div className="w-16 h-16 mx-auto bg-blue-500/20 rounded-full flex items-center justify-center">
+                <Upload className="w-8 h-8 text-blue-400 animate-pulse" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-lg font-semibold">Uploading...</h3>
+                <h3 className="text-lg font-semibold text-white">Uploading...</h3>
                 <Progress value={uploadProgress} className="w-full max-w-xs mx-auto" />
-                <p className="text-sm text-gray-600">{uploadProgress}% complete</p>
+                <p className="text-sm text-white/60">{uploadProgress}% complete</p>
               </div>
             </motion.div>
           ) : (
@@ -126,21 +126,21 @@ export default function FileUpload({ onUploadComplete, onError }: FileUploadProp
               animate={{ opacity: 1, y: 0 }}
               className="space-y-4"
             >
-              <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center">
-                <FileText className="w-8 h-8 text-gray-600" />
+              <div className="w-16 h-16 mx-auto bg-white/10 rounded-full flex items-center justify-center">
+                <FileText className="w-8 h-8 text-white" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-lg font-semibold">
+                <h3 className="text-lg font-semibold text-white">
                   {isDragActive ? 'Drop your file here' : 'Upload Assignment'}
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-white/80">
                   Drag and drop your DOCX or PDF file here, or click to browse
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-white/60">
                   Supported formats: .docx, .pdf (max 50MB)
                 </p>
               </div>
-              <Button variant="outline" className="mt-4">
+              <Button variant="outline" className="mt-4 border-white/20 text-white hover:bg-white/10">
                 Choose File
               </Button>
             </motion.div>

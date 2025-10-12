@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VS Code - Web Development</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #1e1e1e;
+            color: #cccccc;
+            overflow: hidden;
+            height: 100vh;
+            font-size: 13px;
+        }
+
+        /* VS Code Top Bar */
+        .vscode-topbar {
+            background: #2d2d30;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            border-bottom: 1px solid #3e3e42;
+            -webkit-app-region: drag;
+        }
+
+        .vscode-topbar .menu-items {
+            display: flex;
+            gap: 20px;
+            color: #cccccc;
+            font-size: 12px;
+        }
+
+        .vscode-topbar .menu-items span {
+            cursor: pointer;
+            padding: 5px 8px;
+            border-radius: 3px;
+        }
+
+        .vscode-topbar .menu-items span:hover {
+            background: #2a2d2e;
+        }
+
+        .vscode-topbar .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .vscode-topbar .window-controls div {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .vscode-topbar .window-controls .minimize { background: #ffbd44; }
+        .vscode-topbar .window-controls .maximize { background: #00ca4e; }
+        .vscode-topbar .window-controls .close { background: #ff605c; }
+
+        /* Main Container */
+        .vscode-container {
+            display: flex;
+            height: calc(100vh - 35px);
+        }
+
+        /* Activity Bar */
+        .activity-bar {
+            width: 48px;
+            background: #333333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 0;
+            gap: 4px;
+        }
+
+        .activity-bar .icon {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 4px;
+            color: #cccccc;
+            font-size: 18px;
+            position: relative;
+        }
+
+        .activity-bar .icon:hover {
+            background: #2a2d2e;
+        }
+
+        .activity-bar .icon.active {
+            background: #37373d;
+            color: #ffffff;
+        }
+
+        .activity-bar .icon.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3px;
+            height: 100%;
+            background: #ffffff;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: #252526;
+            border-right: 1px solid #3e3e42;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 8px 16px;
+            background: #2d2d30;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+            font-weight: 600;
+            color: #cccccc;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar-header .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .sidebar-header .actions button {
+            background: none;
+            border: none;
+            color: #cccccc;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 3px;
+        }
+
+        .sidebar-header .actions button:hover {
+            background: #2a2d2e;
+        }
+
+        /* File Explorer */
+        .file-explorer {
+            flex: 1;
+            padding: 8px 0;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 4px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #cccccc;
+        }
+
+        .file-item:hover {
+            background: #2a2d2e;
+        }
+
+        .file-item.active {
+            background: #094771;
+        }
+
+        .file-item .icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .file-item .folder {
+            color: #75beff;
+        }
+
+        .file-item .html-file {
+            color: #ff6b6b;
+        }
+
+        .file-item .css-file {
+            color: #4dabf7;
+        }
+
+        .file-item .js-file {
+            color: #ffd43b;
+        }
+
+        /* Main Editor Area */
+        .editor-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #1e1e1e;
+        }
+
+        /* Editor Tabs */
+        .editor-tabs {
+            background: #2d2d30;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            height: 35px;
+        }
+
+        .editor-tab {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            background: #2d2d30;
+            border-right: 1px solid #3e3e42;
+            cursor: pointer;
+            font-size: 13px;
+            color: #cccccc;
+            position: relative;
+        }
+
+        .editor-tab.active {
+            background: #1e1e1e;
+            color: white;
+        }
+
+        .editor-tab .close-btn {
+            margin-left: 8px;
+            opacity: 0;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .editor-tab:hover .close-btn {
+            opacity: 1;
+        }
+
+        /* Breadcrumbs */
+        .breadcrumbs {
+            padding: 8px 16px;
+            background: #1e1e1e;
+            border-bottom: 1px solid #3e3e42;
+            font-size: 12px;
+            color: #cccccc;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .breadcrumbs .separator {
+            color: #666666;
+        }
+
+        /* Code Editor */
+        .code-editor {
+            flex: 1;
+            background: #1e1e1e;
+            padding: 16px;
+            overflow: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .code-editor .line-number {
+            display: inline-block;
+            width: 40px;
+            color: #858585;
+            text-align: right;
+            margin-right: 16px;
+            user-select: none;
+        }
+
+        .code-editor .code-line {
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .code-editor .code-content {
+            flex: 1;
+        }
+
+        /* Syntax Highlighting - Exact VS Code Dark Theme Colors */
+        .html-tag { color: #569cd6; }  /* HTML tags - Blue */
+        .html-attr { color: #9cdcfe; } /* HTML attributes - Light blue */
+        .html-value { color: #ce9178; } /* HTML attribute values - Orange */
+        .html-comment { color: #6a9955; } /* Comments - Green */
+        .css-selector { color: #d7ba7d; } /* CSS selectors - Yellow */
+        .css-property { color: #9cdcfe; } /* CSS properties - Light blue */
+        .css-value { color: #ce9178; } /* CSS values - Orange */
+        .js-keyword { color: #569cd6; } /* JS keywords - Blue */
+        .js-string { color: #ce9178; } /* JS strings - Orange */
+        .js-function { color: #dcdcaa; } /* JS functions - Light yellow */
+        .js-comment { color: #6a9955; } /* Comments - Green */
+        
+        /* Additional VS Code colors for HTML */
+        .doctype { color: #569cd6; } /* DOCTYPE - Blue */
+        .html-meta { color: #569cd6; } /* Meta tags - Blue */
+        .html-script { color: #569cd6; } /* Script tags - Blue */
+        .html-link { color: #569cd6; } /* Link tags - Blue */
+        .html-title { color: #569cd6; } /* Title tags - Blue */
+        .html-body { color: #569cd6; } /* Body tags - Blue */
+        .html-div { color: #569cd6; } /* Div tags - Blue */
+        
+        /* Line numbers */
+        .line-number {
+            color: #858585;
+            text-align: right;
+            display: inline-block;
+            width: 40px;
+            margin-right: 16px;
+            user-select: none;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: #007acc;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            font-size: 12px;
+            color: white;
+        }
+
+        .status-bar .left {
+            display: flex;
+            gap: 16px;
+        }
+
+        .status-bar .right {
+            display: flex;
+            gap: 16px;
+        }
+
+        /* Panel (Terminal/Output) */
+        .panel {
+            background: #1e1e1e;
+            border-top: 1px solid #3e3e42;
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            background: #2d2d30;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            border-bottom: 1px solid #3e3e42;
+            font-size: 12px;
+            color: #cccccc;
+        }
+
+        .panel-tabs {
+            display: flex;
+            gap: 16px;
+        }
+
+        .panel-tab {
+            cursor: pointer;
+            padding: 8px 0;
+            border-bottom: 2px solid transparent;
+        }
+
+        .panel-tab.active {
+            border-bottom-color: #007acc;
+            color: white;
+        }
+
+        .panel-content {
+            flex: 1;
+            padding: 16px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            color: #cccccc;
+            overflow: auto;
+        }
+
+        .terminal-prompt {
+            color: #4ec9b0;
+        }
+
+        .terminal-path {
+            color: #9cdcfe;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #424242;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4f4f4f;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            
+            .code-editor {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- VS Code Top Bar -->
+    <div class="vscode-topbar">
+        <div class="menu-items">
+            <span>File</span>
+            <span>Edit</span>
+            <span>Selection</span>
+            <span>View</span>
+            <span>Go</span>
+            <span>Run</span>
+            <span>Terminal</span>
+            <span>Help</span>
+        </div>
+        <div class="window-controls">
+            <div class="minimize"></div>
+            <div class="maximize"></div>
+            <div class="close"></div>
+        </div>
+    </div>
+
+    <div class="vscode-container">
+        <!-- Activity Bar -->
+        <div class="activity-bar">
+            <div class="icon active">📁</div>
+            <div class="icon">🔍</div>
+            <div class="icon">🌿</div>
+            <div class="icon">▶️</div>
+            <div class="icon">🧩</div>
+            <div class="icon">🌐</div>
+            <div class="icon">🐳</div>
+            <div class="icon">⚙️</div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                EXPLORER
+                <div class="actions">
+                    <button>📁</button>
+                    <button>⋯</button>
+                </div>
+            </div>
+            <div class="file-explorer">
+                <div class="file-item">
+                    <div class="icon folder">📁</div>
+                    <span>backend</span>
+                </div>
+                <div class="file-item">
+                    <div class="icon folder">📁</div>
+                    <span>frontend</span>
+                    <div style="margin-left: 24px;">
+                        <div class="file-item">
+                            <div class="icon folder">📁</div>
+                            <span>node_modules</span>
+                        </div>
+                        <div class="file-item">
+                            <div class="icon folder">📁</div>
+                            <span>src</span>
+                        </div>
+                        <div class="file-item">
+                            <div class="icon folder">📁</div>
+                            <span>test_project</span>
+                        </div>
+                        <div class="file-item">
+                            <div class="icon">📄</div>
+                            <span>Dockerfile</span>
+                        </div>
+                        <div class="file-item active">
+                            <div class="icon html-file">🌐</div>
+                            <span>index.html</span>
+                        </div>
+                        <div class="file-item">
+                            <div class="icon">📄</div>
+                            <span>package-lock.json</span>
+                        </div>
+                        <div class="file-item">
+                            <div class="icon">📄</div>
+                            <span>package.json</span>
+                        </div>
+                        <div class="file-item">
+                            <div class="icon">📄</div>
+                            <span>postcss.config.js</span>
+                        </div>
+                        <div class="file-item">
+                            <div class="icon">📄</div>
+                            <span>tailwind.config.js</span>
+                        </div>
+                        <div class="file-item">
+                            <div class="icon">📄</div>
+                            <span>test.zip</span>
+                        </div>
+                        <div class="file-item">
+                            <div class="icon">📄</div>
+                            <span>vite.config.js</span>
+                        </div>
+                        <div class="file-item">
+                            <div class="icon">📄</div>
+                            <span>.gitignore</span>
+                        </div>
+                        <div class="file-item">
+                            <div class="icon">📄</div>
+                            <span>check_docker.bat</span>
+                        </div>
+                        <div class="file-item">
+                            <div class="icon">📄</div>
+                            <span>DOCKER_SETUP.md</span>
+                        </div>
+                        <div class="file-item">
+                            <div class="icon">📄</div>
+                            <span>docker-compose.yml</span>
+                        </div>
+                        <div class="file-item">
+                            <div class="icon">📄</div>
+                            <span>README.md</span>
+                        </div>
+                        <div class="file-item">
+                            <div class="icon">📄</div>
+                            <span>start.bat</span>
+                        </div>
+                        <div class="file-item">
+                            <div class="icon">📄</div>
+                            <span>start.sh</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Editor Area -->
+        <div class="editor-area">
+            <!-- Editor Tabs -->
+            <div class="editor-tabs">
+                <div class="editor-tab active">
+                    <span>index.html</span>
+                    <span class="close-btn">×</span>
+                </div>
+            </div>
+
+            <!-- Breadcrumbs -->
+            <div class="breadcrumbs">
+                <span>frontend</span>
+                <span class="separator">></span>
+                <span>index.html</span>
+            </div>
+
+            <!-- Code Editor -->
+            <div class="code-editor" id="codeEditor">
+                <!-- Code will be inserted here -->
+            </div>
+
+            <!-- Panel (Terminal) -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-tabs">
+                        <div class="panel-tab">PROBLEMS</div>
+                        <div class="panel-tab">OUTPUT</div>
+                        <div class="panel-tab">DEBUG CONSOLE</div>
+                        <div class="panel-tab active">TERMINAL</div>
+                        <div class="panel-tab">PORTS</div>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="terminal-prompt">PS C:\Users\pilla\OneDrive\Desktop\New folder></div>
+                    <div class="terminal-prompt">PS C:\Users\pilla\OneDrive\Desktop\New folder></div>
+                </div>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <div class="left">
+                    <span>🌿 main</span>
+                    <span>🔧 TypeScript</span>
+                    <span>⚡ 0 Problems</span>
+                </div>
+                <div class="right">
+                    <span>UTF-8</span>
+                    <span>HTML</span>
+                    <span>Ln 14, Col 1</span>
+                    <span>Spaces: 2</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Function to insert code into the editor
+        function insertCode(code) {
+            const editor = document.getElementById('codeEditor');
+            const lines = code.split('\n');
+            let html = '';
+            
+            lines.forEach((line, index) => {
+                html += `<div class="code-line">
+                    <span class="line-number">${index + 1}</span>
+                    <span class="code-content">${highlightSyntax(line)}</span>
+                </div>`;
+            });
+            
+            editor.innerHTML = html;
+        }
+
+        // Precise VS Code syntax highlighting
+        function highlightSyntax(line) {
+            if (!line) return line;
+            
+            // DOCTYPE
+            line = line.replace(/&lt;!doctype/gi, '<span class="doctype">&lt;!doctype</span>');
+            
+            // HTML tags - more precise matching
+            line = line.replace(/&lt;(\/?)(html|head|body|meta|link|title|script|div|span|p|h1|h2|h3|h4|h5|h6|a|img|ul|ol|li|table|tr|td|th|form|input|button|select|option)\b/gi, '<span class="html-tag">&lt;$1$2</span>');
+            line = line.replace(/&lt;(\/?)([a-zA-Z][a-zA-Z0-9]*)/g, '<span class="html-tag">&lt;$1$2</span>');
+            
+            // HTML attributes - exact matching for common attributes
+            const htmlAttrs = ['charset', 'name', 'content', 'rel', 'type', 'href', 'src', 'lang', 'viewport', 'id', 'class', 'style'];
+            htmlAttrs.forEach(attr => {
+                const regex = new RegExp(`\\b${attr}\\b(?=\\s*=)`, 'gi');
+                line = line.replace(regex, `<span class="html-attr">${attr}</span>`);
+            });
+            
+            // HTML attribute values
+            line = line.replace(/="([^"]*)"/g, '=<span class="html-value">"$1"</span>');
+            line = line.replace(/='([^']*)'/g, '=<span class="html-value">\'$1\'</span>');
+            
+            // Comments
+            line = line.replace(/<!--[\s\S]*?-->/g, '<span class="html-comment">$&</span>');
+            line = line.replace(/\/\/.*$/g, '<span class="js-comment">$&</span>');
+            line = line.replace(/\/\*[\s\S]*?\*\//g, '<span class="js-comment">$&</span>');
+            
+            // JavaScript keywords - exact VS Code colors
+            const jsKeywords = ['function', 'const', 'let', 'var', 'if', 'else', 'for', 'while', 'return', 'class', 'import', 'export', 'default', 'async', 'await'];
+            jsKeywords.forEach(keyword => {
+                const regex = new RegExp(`\\b${keyword}\\b`, 'g');
+                line = line.replace(regex, `<span class="js-keyword">${keyword}</span>`);
+            });
+            
+            // Strings - exact VS Code orange color
+            line = line.replace(/"([^"]*)"/g, '<span class="js-string">"$1"</span>');
+            line = line.replace(/'([^']*)'/g, '<span class="js-string">\'$1\'</span>');
+            
+            // Functions and method calls
+            line = line.replace(/([a-zA-Z][a-zA-Z0-9]*)\s*\(/g, '<span class="js-function">$1</span>(');
+            
+            return line;
+        }
+
+        // Insert the provided code when the page loads
+        window.addEventListener('load', function() {
+            // This will be populated by the backend
+            const code = `{{CODE_CONTENT}}`;
+            if (code && code !== '{{CODE_CONTENT}}') {
+                insertCode(code);
+            }
+        });
+    </script>
+</body>
+</html>

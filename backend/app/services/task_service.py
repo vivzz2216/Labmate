@@ -14,6 +14,16 @@ from ..config import settings
 class TaskService:
     """Service for orchestrating AI task execution"""
     
+    def _map_language_to_theme(self, language: str) -> str:
+        """Map programming language to IDE theme"""
+        mapping = {
+            'python': 'idle',
+            'java': 'notepad',
+            'c': 'codeblocks',
+            'webdev': 'vscode'
+        }
+        return mapping.get(language, 'idle')  # Default to idle
+    
     async def submit_tasks(self, file_id: int, tasks: List[TaskSubmission], 
                           theme: str, insertion_preference: str, db: Session) -> int:
         """Submit selected tasks for processing"""
@@ -22,6 +32,10 @@ class TaskService:
         upload = db.query(Upload).filter(Upload.id == file_id).first()
         if not upload:
             raise ValueError("Upload not found")
+        
+        # Map language to theme if not provided
+        if not theme and upload.language:
+            theme = self._map_language_to_theme(upload.language)
         
         # Create AI job record
         job = AIJob(
@@ -126,8 +140,11 @@ class TaskService:
     async def _execute_code_task(self, task: AITask, job: AIJob, db: Session):
         """Execute code for a task and generate screenshots"""
         
-        # Validate code
-        is_valid, error_msg = validator_service.validate_code(task.user_code)
+        # Validate code based on language
+        upload = db.query(Upload).filter(Upload.id == job.upload_id).first()
+        language = upload.language if upload else "python"
+        
+        is_valid, error_msg = validator_service.validate_code(task.user_code, language)
         if not is_valid:
             task.status = "failed"
             task.caption = f"Code validation failed: {error_msg}"
@@ -135,7 +152,7 @@ class TaskService:
             return
         
         # Execute code
-        success, output, logs, exit_code = await executor_service.execute_code(task.user_code)
+        success, output, logs, exit_code = await executor_service.execute_code(task.user_code, language)
         
         # Store execution results
         task.stdout = output
@@ -143,8 +160,12 @@ class TaskService:
         
         # Generate screenshot
         if success and output:
+            # Get the language from the upload record
+            upload = db.query(Upload).filter(Upload.id == job.upload_id).first()
+            language = upload.language if upload else "python"
+            
             screenshot_success, screenshot_path, width, height = await screenshot_service.generate_screenshot(
-                task.user_code, output, job.theme, job.id
+                task.user_code, output, job.theme, job.id, language
             )
             
             if screenshot_success:

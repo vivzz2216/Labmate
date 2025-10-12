@@ -1,47 +1,150 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Dark mode configuration */
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --background: hsl(0 0% 0%);
+  --foreground: hsl(0 0% 100%);
+  --card: hsl(0 0% 5%);
+  --card-foreground: hsl(0 0% 100%);
+  --popover: hsl(0 0% 5%);
+  --popover-foreground: hsl(0 0% 100%);
+  --primary: hsl(221.2 83.2% 53.3%);
+  --primary-foreground: hsl(210 40% 98%);
+  --secondary: hsl(0 0% 10%);
+  --secondary-foreground: hsl(0 0% 100%);
+  --muted: hsl(0 0% 10%);
+  --muted-foreground: hsl(0 0% 60%);
+  --accent: hsl(0 0% 10%);
+  --accent-foreground: hsl(0 0% 100%);
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-foreground: hsl(210 40% 98%);
+  --border: hsl(0 0% 20%);
+  --input: hsl(0 0% 20%);
+  --ring: hsl(221.2 83.2% 53.3%);
+  --radius: 0.5rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+.dark {
+  --background: hsl(0 0% 0%);
+  --foreground: hsl(0 0% 100%);
+  --card: hsl(0 0% 5%);
+  --card-foreground: hsl(0 0% 100%);
+  --popover: hsl(0 0% 5%);
+  --popover-foreground: hsl(0 0% 100%);
+  --primary: hsl(217.2 91.2% 59.8%);
+  --primary-foreground: hsl(222.2 84% 4.9%);
+  --secondary: hsl(0 0% 10%);
+  --secondary-foreground: hsl(0 0% 100%);
+  --muted: hsl(0 0% 10%);
+  --muted-foreground: hsl(0 0% 60%);
+  --accent: hsl(0 0% 10%);
+  --accent-foreground: hsl(0 0% 100%);
+  --destructive: hsl(0 62.8% 30.6%);
+  --destructive-foreground: hsl(210 40% 98%);
+  --border: hsl(0 0% 20%);
+  --input: hsl(0 0% 20%);
+  --ring: hsl(224.3 76.3% 94.1%);
+}
+
+/* Base styles */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-black text-white;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-feature-settings: 'cv11', 'ss01';
+    font-variation-settings: 'opsz' 32;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+::-webkit-scrollbar-track {
+  background: hsl(0 0% 5%);
 }
 
-/* Custom gradient text utility */
+::-webkit-scrollbar-thumb {
+  background: hsl(0 0% 30%);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(0 0% 40%);
+}
+
+/* Glass morphism effects */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #06b6d4, #3b82f6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Custom animations */
-@keyframes fadeInUp {
+/* Button styles */
+.btn-primary {
+  @apply bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition-all duration-200 font-medium;
+}
+
+.btn-secondary {
+  @apply bg-gray-900/50 border border-white/20 text-white px-6 py-3 rounded-xl hover:bg-gray-800/50 transition-all duration-200 font-medium;
+}
+
+/* Card styles */
+.card {
+  @apply bg-gray-900/50 border border-white/10 rounded-2xl p-8 backdrop-blur-sm;
+}
+
+.card-hover {
+  @apply transition-all duration-300 hover:border-white/20 hover:bg-gray-900/70;
+}
+
+/* Input styles */
+.input {
+  @apply bg-gray-900 border border-white/20 rounded-xl text-white placeholder-white/60 focus:outline-none focus:border-blue-500 transition-colors;
+}
+
+/* Animation utilities */
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
   from {
     opacity: 0;
     transform: translateY(30px);
@@ -52,124 +155,37 @@ body {
   }
 }
 
-.animate-fade-in-up {
-  animation: fadeInUp 0.6s ease-out;
-}
-
-/* File upload area styles */
-.file-upload-area {
-  border: 2px dashed #cbd5e0;
-  transition: all 0.3s ease;
-}
-
-.file-upload-area:hover {
-  border-color: #667eea;
-  background-color: #f7fafc;
-}
-
-.file-upload-area.drag-active {
-  border-color: #667eea;
-  background-color: #eef2ff;
-}
-
-/* Task card styles */
-.task-card {
-  transition: all 0.3s ease;
-}
-
-.task-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
-/* Progress bar styles */
-.progress-bar {
-  transition: width 0.3s ease;
-}
-
-/* Button styles */
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  transition: all 0.3s ease;
-}
-
-.btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-/* Screenshot preview styles */
-.screenshot-preview {
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
-}
-
-.screenshot-preview:hover {
-  transform: scale(1.02);
-}
-
-/* Loading spinner */
-.spinner {
-  border: 2px solid #f3f3f3;
-  border-top: 2px solid #667eea;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Status badges */
-.status-pending {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-.status-running {
-  background-color: #dbeafe;
-  color: #1e40af;
-}
-
-.status-completed {
-  background-color: #d1fae5;
-  color: #065f46;
-}
-
-.status-failed {
-  background-color: #fee2e2;
-  color: #991b1b;
-}
-
-/* Responsive design */
+/* Responsive utilities */
 @media (max-width: 768px) {
   .container {
-    padding: 1rem;
-  }
-  
-  .grid-cols-1 {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
+    @apply px-4;
   }
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .file-upload-area {
-    border-color: #4a5568;
-    background-color: #2d3748;
-  }
-  
-  .file-upload-area:hover {
-    border-color: #667eea;
-    background-color: #1a202c;
-  }
-  
-  .task-card {
-    background-color: #2d3748;
-    border-color: #4a5568;
-  }
+/* Focus styles */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black;
+}
+
+/* Selection styles */
+::selection {
+  background: rgba(59, 130, 246, 0.3);
+  color: white;
+}
+
+/* Smooth transitions */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Hide scrollbar but keep functionality */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }

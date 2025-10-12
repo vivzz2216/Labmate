@@ -20,10 +20,15 @@ async def analyze_document(
     if not upload:
         raise HTTPException(status_code=404, detail="File not found")
     
+    # Update upload with language if provided
+    if request.language:
+        upload.language = request.language
+        db.commit()
+    
     try:
         # Analyze the document
         candidates_data = await analysis_service.analyze_document(
-            upload.file_path, upload.file_type
+            upload.file_path, upload.file_type, request.language
         )
         
         # Convert to response format

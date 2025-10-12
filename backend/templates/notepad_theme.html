@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notepad - Java Code</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Consolas', 'Courier New', monospace;
+            background-color: #ffffff;
+            color: #000000;
+            margin: 0;
+            padding: 0;
+            font-size: 12px;
+        }
+        
+        .notepad-window {
+            background-color: #ffffff;
+            border: 1px solid #c0c0c0;
+            margin: 20px auto;
+            width: 800px;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .title-bar {
+            background: linear-gradient(to bottom, #ece9d8, #d4d0c8);
+            height: 30px;
+            border-bottom: 1px solid #c0c0c0;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            font-size: 11px;
+            font-weight: normal;
+            color: #000000;
+        }
+        
+        .title-icon {
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(45deg, #4a90e2 0%, #4a90e2 50%, #ffd700 50%, #ffd700 100%);
+            margin-right: 8px;
+            border-radius: 2px;
+            position: relative;
+        }
+        
+        .menu-bar {
+            background-color: #f0f0f0;
+            height: 22px;
+            border-bottom: 1px solid #c0c0c0;
+            display: flex;
+            align-items: center;
+            padding: 0 4px;
+            font-size: 11px;
+        }
+        
+        .menu-item {
+            padding: 2px 8px;
+            cursor: default;
+            border: 1px solid transparent;
+        }
+        
+        .menu-item:hover {
+            background-color: #e0e0e0;
+            border: 1px solid #c0c0c0;
+        }
+        
+        .editor-area {
+            background-color: #ffffff;
+            padding: 8px;
+            min-height: 400px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        
+        .code-line {
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Java syntax highlighting */
+        .keyword {
+            color: #0000ff;
+            font-weight: bold;
+        }
+        
+        .string {
+            color: #008000;
+        }
+        
+        .comment {
+            color: #808080;
+            font-style: italic;
+        }
+        
+        .number {
+            color: #ff0000;
+        }
+        
+        .operator {
+            color: #000000;
+            font-weight: bold;
+        }
+        
+        .class-name {
+            color: #800080;
+            font-weight: bold;
+        }
+        
+        .method-name {
+            color: #000080;
+        }
+        
+        .variable {
+            color: #000000;
+        }
+        
+        .annotation {
+            color: #808000;
+            font-style: italic;
+        }
+        
+        .status-bar {
+            background-color: #f0f0f0;
+            height: 20px;
+            border-top: 1px solid #c0c0c0;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            font-size: 11px;
+            color: #000000;
+        }
+        
+        .status-text {
+            margin-right: 20px;
+        }
+        
+        .line-col {
+            margin-left: auto;
+        }
+        
+        .output-section {
+            background-color: #f8f8f8;
+            border-top: 1px solid #c0c0c0;
+            padding: 8px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        .output-title {
+            font-weight: bold;
+            margin-bottom: 4px;
+            color: #000000;
+        }
+        
+        .output-content {
+            background-color: #ffffff;
+            border: 1px solid #c0c0c0;
+            padding: 4px;
+            min-height: 60px;
+            white-space: pre-wrap;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="notepad-window">
+        <!-- Title Bar -->
+        <div class="title-bar">
+            <div class="title-icon"></div>
+            <span>Untitled - Notepad</span>
+        </div>
+        
+        <!-- Menu Bar -->
+        <div class="menu-bar">
+            <span class="menu-item">File</span>
+            <span class="menu-item">Edit</span>
+            <span class="menu-item">Format</span>
+            <span class="menu-item">View</span>
+            <span class="menu-item">Help</span>
+        </div>
+        
+        <!-- Editor Area -->
+        <div class="editor-area" id="editor">
+            <div class="code-line"><span class="keyword">public class</span> <span class="class-name">HelloWorld</span> {</div>
+            <div class="code-line">    <span class="keyword">public static void</span> <span class="method-name">main</span>(<span class="class-name">String</span>[] <span class="variable">args</span>) {</div>
+            <div class="code-line">        <span class="class-name">System</span>.<span class="variable">out</span>.<span class="method-name">println</span>(<span class="string">"Hello, World!"</span>);</div>
+            <div class="code-line">    }</div>
+            <div class="code-line">}</div>
+        </div>
+        
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <span class="status-text">Ready</span>
+            <span class="line-col">Ln 1, Col 1</span>
+        </div>
+        
+        <!-- Output Section -->
+        <div class="output-section">
+            <div class="output-title">Output:</div>
+            <div class="output-content" id="output">Hello, World!</div>
+        </div>
+    </div>
+
+    <script>
+        // Update the editor content with the provided code
+        function updateCode(code) {
+            const editor = document.getElementById('editor');
+            editor.innerHTML = '';
+            
+            // Basic Java syntax highlighting
+            const lines = code.split('\n');
+            lines.forEach(line => {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = 'code-line';
+                
+                // Simple syntax highlighting for Java
+                let highlightedLine = line
+                    .replace(/\b(public|private|protected|static|final|class|interface|extends|implements|if|else|for|while|do|switch|case|default|break|continue|return|try|catch|finally|throw|throws|new|this|super|null|true|false)\b/g, '<span class="keyword">$1</span>')
+                    .replace(/"([^"]*)"/g, '<span class="string">"$1"</span>')
+                    .replace(/\/\/.*$/gm, '<span class="comment">$&</span>')
+                    .replace(/\/\*[\s\S]*?\*\//g, '<span class="comment">$&</span>')
+                    .replace(/\b\d+\b/g, '<span class="number">$&</span>')
+                    .replace(/\b([A-Z][a-zA-Z0-9]*)\b/g, '<span class="class-name">$1</span>')
+                    .replace(/\b([a-z][a-zA-Z0-9]*)\s*\(/g, '<span class="method-name">$1</span>(');
+                
+                lineDiv.innerHTML = highlightedLine || '&nbsp;';
+                editor.appendChild(lineDiv);
+            });
+        }
+        
+        // Update the output content
+        function updateOutput(output) {
+            const outputElement = document.getElementById('output');
+            outputElement.textContent = output || 'No output';
+        }
+        
+        // Get code and output from URL parameters or use defaults
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code') || document.getElementById('editor').innerHTML;
+        const output = urlParams.get('output') || 'Hello, World!';
+        
+        updateCode(code);
+        updateOutput(output);
+    </script>
+</body>
+</html>

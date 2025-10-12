@@ -125,47 +125,47 @@ export default function PreviewGrid({
   return (
     <div className="space-y-6">
       {/* Summary Stats */}
-      <Card>
+      <Card className="bg-gray-900/50 border-white/10">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
+          <CardTitle className="flex items-center space-x-2 text-white">
             <FileText className="w-5 h-5" />
             <span>Report Preview</span>
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-white/60">
             Review and reorder your screenshots before generating the final report
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-3 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{orderedJobs.length}</div>
-              <div className="text-sm text-blue-600">Total Tasks</div>
+            <div className="text-center p-3 bg-blue-500/10 rounded-lg">
+              <div className="text-2xl font-bold text-blue-400">{orderedJobs.length}</div>
+              <div className="text-sm text-blue-400">Total Tasks</div>
             </div>
-            <div className="text-center p-3 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{completedJobs.length}</div>
-              <div className="text-sm text-green-600">Completed</div>
+            <div className="text-center p-3 bg-green-500/10 rounded-lg">
+              <div className="text-2xl font-bold text-green-400">{completedJobs.length}</div>
+              <div className="text-sm text-green-400">Completed</div>
             </div>
-            <div className="text-center p-3 bg-purple-50 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">{jobsWithScreenshots.length}</div>
-              <div className="text-sm text-purple-600">Screenshots</div>
+            <div className="text-center p-3 bg-purple-500/10 rounded-lg">
+              <div className="text-2xl font-bold text-purple-400">{jobsWithScreenshots.length}</div>
+              <div className="text-sm text-purple-400">Screenshots</div>
             </div>
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-gray-600">
+            <div className="text-center p-3 bg-red-500/10 rounded-lg">
+              <div className="text-2xl font-bold text-red-400">
                 {orderedJobs.filter(job => job.status === 'failed').length}
               </div>
-              <div className="text-sm text-gray-600">Failed</div>
+              <div className="text-sm text-red-400">Failed</div>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Drag and Drop Grid */}
-      <Card>
+      <Card className="bg-gray-900/50 border-white/10">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Screenshot Gallery</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-white">Screenshot Gallery</CardTitle>
+              <CardDescription className="text-white/60">
                 Drag and drop to reorder screenshots. The order will be maintained in the final report.
               </CardDescription>
             </div>
@@ -173,6 +173,7 @@ export default function PreviewGrid({
               variant="outline"
               size="sm"
               onClick={handleReset}
+              className="border-white/20 text-white hover:bg-white/10"
             >
               <RefreshCw className="w-4 h-4 mr-2" />
               Reset Order
@@ -182,9 +183,9 @@ export default function PreviewGrid({
         <CardContent>
           {orderedJobs.length === 0 ? (
             <div className="text-center py-12">
-              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-600 mb-2">No Screenshots Available</h3>
-              <p className="text-gray-500">Execute some code tasks first to generate screenshots.</p>
+              <FileText className="w-12 h-12 text-white/40 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-white mb-2">No Screenshots Available</h3>
+              <p className="text-white/60">Execute some code tasks first to generate screenshots.</p>
             </div>
           ) : (
             <DndContext
@@ -221,12 +222,12 @@ export default function PreviewGrid({
 
       {/* Generate Report Button */}
       {jobsWithScreenshots.length > 0 && (
-        <Card>
+        <Card className="bg-gray-900/50 border-white/10">
           <CardContent className="p-6">
             <div className="text-center space-y-4">
               <div>
-                <h3 className="text-lg font-semibold mb-2">Ready to Update Your Document</h3>
-                <p className="text-gray-600">
+                <h3 className="text-lg font-semibold mb-2 text-white">Ready to Update Your Document</h3>
+                <p className="text-white/80">
                   {jobsWithScreenshots.length} screenshot{jobsWithScreenshots.length !== 1 ? 's' : ''} will be added to your original document.
                 </p>
               </div>
@@ -234,7 +235,7 @@ export default function PreviewGrid({
                 onClick={handleGenerateReport}
                 disabled={generatingReport || jobsWithScreenshots.length === 0}
                 size="lg"
-                className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
+                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
               >
                 {generatingReport ? (
                   <>

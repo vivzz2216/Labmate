@@ -52,6 +52,10 @@ const config: Config = {
         "fade-in": "fadeIn 0.5s ease-in-out",
         "slide-up": "slideUp 0.5s ease-out",
         "glow": "glow 2s ease-in-out infinite alternate",
+        "float": "float 6s ease-in-out infinite",
+        "float-delayed": "floatDelayed 8s ease-in-out infinite 2s",
+        "float-slow": "floatSlow 10s ease-in-out infinite 4s",
+        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
       },
       keyframes: {
         fadeIn: {
@@ -65,6 +69,22 @@ const config: Config = {
         glow: {
           "0%": { boxShadow: "0 0 5px rgba(59, 130, 246, 0.5)" },
           "100%": { boxShadow: "0 0 20px rgba(59, 130, 246, 0.8)" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0px) rotate(0deg)" },
+          "50%": { transform: "translateY(-20px) rotate(5deg)" },
+        },
+        floatDelayed: {
+          "0%, 100%": { transform: "translateY(0px) rotate(0deg)" },
+          "50%": { transform: "translateY(-15px) rotate(-3deg)" },
+        },
+        floatSlow: {
+          "0%, 100%": { transform: "translateY(0px) rotate(0deg)" },
+          "50%": { transform: "translateY(-10px) rotate(2deg)" },
+        },
+        "pulse-glow": {
+          "0%, 100%": { boxShadow: "0 0 20px rgba(102, 126, 234, 0.4)" },
+          "50%": { boxShadow: "0 0 30px rgba(102, 126, 234, 0.8)" },
         },
       },
     },

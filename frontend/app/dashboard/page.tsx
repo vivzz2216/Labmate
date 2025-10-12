@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import FileUpload from '@/components/dashboard/FileUpload'
 import TaskList from '@/components/dashboard/TaskList'
 import AISuggestionsPanel from '@/components/dashboard/AISuggestionsPanel'
-import { ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react'
+import { ArrowLeft, AlertCircle, CheckCircle, FileText } from 'lucide-react'
 import { apiService, type UploadResponse, type Task, type JobStatus, type AITaskCandidate, type TaskSubmission, type TaskResult } from '@/lib/api'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -22,15 +22,23 @@ export default function DashboardPage() {
   const [currentJobId, setCurrentJobId] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showLanguageModal, setShowLanguageModal] = useState(false)
+  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null)
 
   const handleUploadComplete = async (uploadResponse: UploadResponse) => {
     setUpload(uploadResponse)
+    setShowLanguageModal(true)
+  }
+
+  const handleLanguageSelect = async (language: string) => {
+    setSelectedLanguage(language)
+    setShowLanguageModal(false)
     setLoading(true)
     setError(null)
 
     try {
-      // Use AI analysis workflow
-      const analyzeResponse = await apiService.analyzeDocument(uploadResponse.id)
+      // Use AI analysis workflow with selected language
+      const analyzeResponse = await apiService.analyzeDocument(upload!.id, language)
       setAICandidates(analyzeResponse.candidates)
       setCurrentStep('ai_suggestions')
     } catch (err) {
@@ -125,26 +133,26 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-black text-white">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200">
+      <header className="bg-black/80 backdrop-blur-sm border-b border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Link href="/">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back to Home
                 </Button>
               </Link>
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">LM</span>
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <FileText className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-xl font-bold gradient-text">LabMate AI</span>
+                <span className="text-xl font-bold text-white">LabMate AI</span>
               </div>
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-white/60">
               Step {currentStep === 'upload' ? '1' : currentStep === 'ai_suggestions' ? '2' : currentStep === 'results' ? '3' : '4'} of 4
             </div>
           </div>
@@ -156,24 +164,24 @@ export default function DashboardPage() {
         {/* Progress Indicator */}
         <div className="mb-8">
           <div className="flex items-center justify-center space-x-2">
-            <div className={`flex items-center space-x-2 ${currentStep === 'upload' ? 'text-indigo-600' : 'text-green-600'}`}>
+            <div className={`flex items-center space-x-2 ${currentStep === 'upload' ? 'text-blue-400' : 'text-green-400'}`}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                currentStep === 'upload' ? 'bg-indigo-100' : 'bg-green-100'
+                currentStep === 'upload' ? 'bg-blue-500/20' : 'bg-green-500/20'
               }`}>
                 {currentStep === 'upload' ? '1' : <CheckCircle className="w-4 h-4" />}
               </div>
               <span className="font-medium text-sm">Upload</span>
             </div>
             <div className={`w-12 h-1 rounded ${
-              ['ai_suggestions', 'results'].includes(currentStep) ? 'bg-green-500' : 'bg-gray-300'
+              ['ai_suggestions', 'results'].includes(currentStep) ? 'bg-green-500' : 'bg-gray-600'
             }`} />
             <div className={`flex items-center space-x-2 ${
-              currentStep === 'ai_suggestions' ? 'text-indigo-600' : 
-              currentStep === 'results' ? 'text-green-600' : 'text-gray-400'
+              currentStep === 'ai_suggestions' ? 'text-blue-400' : 
+              currentStep === 'results' ? 'text-green-400' : 'text-gray-400'
             }`}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                currentStep === 'ai_suggestions' ? 'bg-indigo-100' : 
-                currentStep === 'results' ? 'bg-green-100' : 'bg-gray-100'
+                currentStep === 'ai_suggestions' ? 'bg-blue-500/20' : 
+                currentStep === 'results' ? 'bg-green-500/20' : 'bg-gray-600/20'
               }`}>
                 {currentStep === 'ai_suggestions' ? '2' : 
                  currentStep === 'results' ? <CheckCircle className="w-4 h-4" /> : '2'}
@@ -181,13 +189,13 @@ export default function DashboardPage() {
               <span className="font-medium text-sm">AI Review</span>
             </div>
             <div className={`w-12 h-1 rounded ${
-              currentStep === 'results' ? 'bg-green-500' : 'bg-gray-300'
+              currentStep === 'results' ? 'bg-green-500' : 'bg-gray-600'
             }`} />
             <div className={`flex items-center space-x-2 ${
-              currentStep === 'results' ? 'text-indigo-600' : 'text-gray-400'
+              currentStep === 'results' ? 'text-blue-400' : 'text-gray-400'
             }`}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                currentStep === 'results' ? 'bg-indigo-100' : 'bg-gray-100'
+                currentStep === 'results' ? 'bg-blue-500/20' : 'bg-gray-600/20'
               }`}>
                 3
               </div>
@@ -203,13 +211,13 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-6"
           >
-            <Card className="border-red-200 bg-red-50">
+            <Card className="border-red-500/50 bg-red-500/10">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
-                  <AlertCircle className="w-5 h-5 text-red-600" />
+                  <AlertCircle className="w-5 h-5 text-red-400" />
                   <div>
-                    <h3 className="font-semibold text-red-800">Error</h3>
-                    <p className="text-sm text-red-600">{error}</p>
+                    <h3 className="font-semibold text-red-400">Error</h3>
+                    <p className="text-sm text-red-300">{error}</p>
                   </div>
                 </div>
               </CardContent>
@@ -227,10 +235,10 @@ export default function DashboardPage() {
           {currentStep === 'upload' && (
             <div className="space-y-6">
               <div className="text-center">
-                <h1 className="text-4xl font-bold mb-4 gradient-text">
+                <h1 className="text-4xl font-bold mb-4 text-white">
                   Upload Your Assignment
                 </h1>
-                <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                <p className="text-xl text-white/80 max-w-2xl mx-auto">
                   Upload your DOCX or PDF lab assignment and let AI analyze which parts need screenshots and which need AI-generated answers.
                 </p>
               </div>
@@ -244,10 +252,10 @@ export default function DashboardPage() {
           {currentStep === 'ai_suggestions' && (
             <div className="space-y-6">
               <div className="text-center">
-                <h1 className="text-4xl font-bold mb-4 gradient-text">
+                <h1 className="text-4xl font-bold mb-4 text-white">
                   AI Suggestions
                 </h1>
-                <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                <p className="text-xl text-white/80 max-w-2xl mx-auto">
                   Review AI-generated task suggestions and customize them before execution.
                 </p>
               </div>
@@ -263,51 +271,52 @@ export default function DashboardPage() {
           {currentStep === 'results' && (
             <div className="space-y-6">
               <div className="text-center">
-                <h1 className="text-4xl font-bold mb-4 gradient-text">
+                <h1 className="text-4xl font-bold mb-4 text-white">
                   Execution Complete!
                 </h1>
-                <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                <p className="text-xl text-white/80 max-w-2xl mx-auto">
                   Your code has been executed and screenshots have been generated. You can now preview and download your report.
                 </p>
               </div>
-              <Card>
+              <Card className="bg-gray-900/50 border-white/10">
                 <CardHeader>
-                  <CardTitle>Results Summary</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-white">Results Summary</CardTitle>
+                  <CardDescription className="text-white/60">
                     Overview of code execution and screenshot generation
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid md:grid-cols-3 gap-4">
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600">
+                    <div className="text-center p-4 bg-green-500/10 rounded-lg">
+                      <div className="text-2xl font-bold text-green-400">
                         {jobResults.filter(job => job.status === 'completed').length}
                       </div>
-                      <div className="text-sm text-green-600">Successfully Executed</div>
+                      <div className="text-sm text-green-400">Successfully Executed</div>
                     </div>
-                    <div className="text-center p-4 bg-red-50 rounded-lg">
-                      <div className="text-2xl font-bold text-red-600">
+                    <div className="text-center p-4 bg-red-500/10 rounded-lg">
+                      <div className="text-2xl font-bold text-red-400">
                         {jobResults.filter(job => job.status === 'failed').length}
                       </div>
-                      <div className="text-sm text-red-600">Failed</div>
+                      <div className="text-sm text-red-400">Failed</div>
                     </div>
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <div className="text-2xl font-bold text-blue-600">
+                    <div className="text-center p-4 bg-blue-500/10 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-400">
                         {jobResults.filter(job => job.screenshot_url).length}
                       </div>
-                      <div className="text-sm text-blue-600">Screenshots Generated</div>
+                      <div className="text-sm text-blue-400">Screenshots Generated</div>
                     </div>
                   </div>
                   <div className="flex justify-center space-x-4">
                     <Button
                       onClick={handlePreview}
-                      className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
+                      className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
                     >
                       Preview & Download Report
                     </Button>
                     <Button
                       onClick={resetWorkflow}
                       variant="outline"
+                      className="border-white/20 text-white hover:bg-white/10"
                     >
                       Start New Assignment
                     </Button>
@@ -318,21 +327,21 @@ export default function DashboardPage() {
               {/* Individual Results */}
               {jobResults.length > 0 && (
                 <div className="space-y-4">
-                  <h2 className="text-2xl font-bold text-center">Execution Results</h2>
+                  <h2 className="text-2xl font-bold text-center text-white">Execution Results</h2>
                   {jobResults.map((result, index) => (
-                    <Card key={result.id} className="border-l-4 border-l-indigo-500">
+                    <Card key={result.id} className="border-l-4 border-l-blue-500 bg-gray-900/50 border-white/10">
                       <CardHeader>
-                        <CardTitle className="flex items-center space-x-2">
+                        <CardTitle className="flex items-center space-x-2 text-white">
                           <span>Task {index + 1}</span>
                           <span className={`px-2 py-1 text-xs rounded-full ${
                             result.status === 'completed' 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
+                              ? 'bg-green-500/20 text-green-400' 
+                              : 'bg-red-500/20 text-red-400'
                           }`}>
                             {result.status}
                           </span>
                         </CardTitle>
-                        <CardDescription>
+                        <CardDescription className="text-white/60">
                           {result.caption || `Code execution ${result.status}`}
                         </CardDescription>
                       </CardHeader>
@@ -340,8 +349,8 @@ export default function DashboardPage() {
                         {/* Screenshot */}
                         {result.screenshot_url && (
                           <div>
-                            <h4 className="font-semibold mb-2">Screenshot:</h4>
-                            <div className="border rounded-lg overflow-hidden">
+                            <h4 className="font-semibold mb-2 text-white">Screenshot:</h4>
+                            <div className="border border-white/20 rounded-lg overflow-hidden">
                               <img 
                                 src={`http://localhost:8000${result.screenshot_url}`}
                                 alt={`Execution result for task ${index + 1}`}
@@ -358,8 +367,8 @@ export default function DashboardPage() {
                         {/* Output */}
                         {result.stdout && (
                           <div>
-                            <h4 className="font-semibold mb-2">Output:</h4>
-                            <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm whitespace-pre-wrap">
+                            <h4 className="font-semibold mb-2 text-white">Output:</h4>
+                            <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm whitespace-pre-wrap border border-white/20">
                               {result.stdout}
                             </div>
                           </div>
@@ -368,15 +377,15 @@ export default function DashboardPage() {
                         {/* AI Answer */}
                         {result.assistant_answer && (
                           <div>
-                            <h4 className="font-semibold mb-2">AI Answer:</h4>
-                            <div className="bg-blue-50 p-4 rounded-lg">
-                              {result.assistant_answer}
+                            <h4 className="font-semibold mb-2 text-white">AI Answer:</h4>
+                            <div className="bg-blue-500/10 p-4 rounded-lg border border-white/20">
+                              <p className="text-white/80">{result.assistant_answer}</p>
                             </div>
                           </div>
                         )}
                         
                         {/* Exit Code */}
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-white/60">
                           Exit Code: {result.exit_code !== null ? result.exit_code : 'N/A'}
                         </div>
                       </CardContent>
@@ -388,6 +397,61 @@ export default function DashboardPage() {
           )}
         </motion.div>
       </main>
+
+      {/* Language Selection Modal */}
+      {showLanguageModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-gray-900 rounded-2xl p-8 max-w-md w-full border border-white/10"
+          >
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <FileText className="w-8 h-8 text-white" />
+              </div>
+              
+              <h2 className="text-2xl font-bold text-white mb-2">
+                Select Programming Language
+              </h2>
+              <p className="text-white/80 mb-8">
+                Choose the programming language for your assignment to get the appropriate IDE theme
+              </p>
+              
+              <div className="space-y-3">
+                <button
+                  onClick={() => handleLanguageSelect('python')}
+                  className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300"
+                >
+                  Python (IDLE)
+                </button>
+                
+                <button
+                  onClick={() => handleLanguageSelect('java')}
+                  className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300"
+                >
+                  Java (Notepad)
+                </button>
+                
+                <button
+                  onClick={() => handleLanguageSelect('c')}
+                  className="w-full bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300"
+                >
+                  C Programming (CodeBlocks)
+                </button>
+                
+                <button
+                  onClick={() => handleLanguageSelect('webdev')}
+                  className="w-full bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300"
+                >
+                  Web Development (VS Code)
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   )
 }

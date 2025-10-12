@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import PreviewGrid from '@/components/preview/PreviewGrid'
-import { ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react'
+import { ArrowLeft, CheckCircle, AlertCircle, FileText } from 'lucide-react'
 import { apiService, type JobStatus, type ComposeResponse, type TaskResult } from '@/lib/api'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -125,42 +125,42 @@ export default function PreviewPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="text-center"
         >
-          <div className="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
           </div>
-          <h2 className="text-xl font-semibold text-gray-700">Loading preview...</h2>
+          <h2 className="text-xl font-semibold text-white">Loading preview...</h2>
         </motion.div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-black">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200">
+      <header className="bg-black/80 backdrop-blur-sm border-b border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Link href="/dashboard">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back to Dashboard
                 </Button>
               </Link>
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">LM</span>
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <FileText className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-xl font-bold gradient-text">LabMate AI</span>
+                <span className="text-xl font-bold text-white">LabMate AI</span>
               </div>
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-white/60">
               Preview & Download
             </div>
           </div>
@@ -176,13 +176,13 @@ export default function PreviewPage() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-6"
           >
-            <Card className="border-green-200 bg-green-50">
+            <Card className="border-green-500/50 bg-green-500/10">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <CheckCircle className="w-5 h-5 text-green-400" />
                   <div>
-                    <h3 className="font-semibold text-green-800">Report Generated Successfully!</h3>
-                    <p className="text-sm text-green-600">
+                    <h3 className="font-semibold text-green-400">Report Generated Successfully!</h3>
+                    <p className="text-sm text-green-300">
                       Your report "{reportGenerated.filename}" has been generated and downloaded.
                     </p>
                   </div>
@@ -199,13 +199,13 @@ export default function PreviewPage() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-6"
           >
-            <Card className="border-red-200 bg-red-50">
+            <Card className="border-red-500/50 bg-red-500/10">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
-                  <AlertCircle className="w-5 h-5 text-red-600" />
+                  <AlertCircle className="w-5 h-5 text-red-400" />
                   <div>
-                    <h3 className="font-semibold text-red-800">Error</h3>
-                    <p className="text-sm text-red-600">{error}</p>
+                    <h3 className="font-semibold text-red-400">Error</h3>
+                    <p className="text-sm text-red-300">{error}</p>
                   </div>
                 </div>
               </CardContent>
@@ -220,10 +220,10 @@ export default function PreviewPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-4xl font-bold mb-4 gradient-text">
+            <h1 className="text-4xl font-bold mb-4 text-white">
               Preview & Download
             </h1>
-                <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                <p className="text-xl text-white/80 max-w-2xl mx-auto">
                   Review your generated screenshots, reorder them as needed, and update your original document with the screenshots.
                 </p>
           </motion.div>
@@ -251,27 +251,27 @@ export default function PreviewPage() {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="mt-12"
         >
-          <Card>
+          <Card className="bg-gray-900/50 border-white/10">
             <CardHeader>
-              <CardTitle>How to Use This Preview</CardTitle>
+              <CardTitle className="text-white">How to Use This Preview</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-3 gap-6">
                 <div className="space-y-2">
-                  <h4 className="font-semibold text-indigo-600">1. Review Screenshots</h4>
-                  <p className="text-sm text-gray-600">
+                  <h4 className="font-semibold text-blue-400">1. Review Screenshots</h4>
+                  <p className="text-sm text-white/80">
                     Click on any screenshot to preview it in full size. Check that the code output looks correct.
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <h4 className="font-semibold text-indigo-600">2. Reorder if Needed</h4>
-                  <p className="text-sm text-gray-600">
+                  <h4 className="font-semibold text-blue-400">2. Reorder if Needed</h4>
+                  <p className="text-sm text-white/80">
                     Drag and drop screenshots to reorder them. The final report will maintain this order.
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <h4 className="font-semibold text-indigo-600">3. Update Document</h4>
-                  <p className="text-sm text-gray-600">
+                  <h4 className="font-semibold text-blue-400">3. Update Document</h4>
+                  <p className="text-sm text-white/80">
                     Click "Update & Download Document" to add screenshots to your original assignment document.
                   </p>
                 </div>

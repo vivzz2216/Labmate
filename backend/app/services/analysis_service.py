@@ -48,7 +48,7 @@ class AnalysisService:
             "required": ["candidates"]
         }
     
-    async def analyze_document(self, file_path: str, file_type: str) -> List[Dict[str, Any]]:
+    async def analyze_document(self, file_path: str, file_type: str, language: str = None) -> List[Dict[str, Any]]:
         """
         Analyze uploaded document and return AI-generated task candidates
         """

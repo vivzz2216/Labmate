@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 import os
 from .config import settings
 from .database import engine, Base
-from .routers import upload, parse, run, compose, download, analyze, tasks
+from .routers import upload, parse, run, compose, download, analyze, tasks, auth, assignments, basic_auth
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -19,7 +19,7 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Frontend URL
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],  # Frontend URLs
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -43,6 +43,9 @@ app.include_router(compose.router, prefix="/api", tags=["compose"])
 app.include_router(download.router, prefix="/api", tags=["download"])
 app.include_router(analyze.router, prefix="/api", tags=["analyze"])
 app.include_router(tasks.router, prefix="/api", tags=["tasks"])
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(assignments.router, prefix="/api/assignments", tags=["assignments"])
+app.include_router(basic_auth.router, prefix="/api/basic-auth", tags=["basic-auth"])
 
 
 @app.get("/")
@@ -53,3 +56,32 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+@app.get("/api/health")
+async def api_health_check():
+    return {"status": "healthy", "service": "LabMate AI API", "version": "1.0.0"}
+
+@app.get("/api/test-patterns")
+async def test_patterns():
+    """Test endpoint to verify question pattern matching"""
+    import re
+    from .services.composer_service import ComposerService
+    
+    composer = ComposerService()
+    test_texts = [
+        "1.Write a Python program to demonstrate the use of iterator and generator functions.",
+        "2.Write a Python program to calculate sum of first 5 natural numbers using recursion.",
+        "B. Questions/Programs:",
+        "Question 1: Write a program",
+        "Task 2: Demonstrate recursion"
+    ]
+    
+    results = {}
+    for text in test_texts:
+        pattern_match = composer._find_question_pattern(text)
+        results[text] = {
+            "matched": pattern_match is not None,
+            "task_number": pattern_match
+        }
+    
+    return {"pattern_tests": results}
