@@ -8,8 +8,14 @@ from ..config import settings
 import os
 import uuid
 from datetime import datetime
+from pydantic import BaseModel
 
 router = APIRouter()  # Temporarily removed beta key requirement for testing
+
+
+class SetFilenameRequest(BaseModel):
+    upload_id: int
+    filename: str
 
 
 @router.post("/upload", response_model=UploadResponse)
@@ -75,3 +81,27 @@ async def upload_file(
         if os.path.exists(file_path):
             os.unlink(file_path)
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
+
+@router.post("/set-filename")
+async def set_custom_filename(
+    request: SetFilenameRequest,
+    db: Session = Depends(get_db)
+):
+    """Set custom filename for an uploaded file"""
+    
+    # Find the upload record
+    upload = db.query(Upload).filter(Upload.id == request.upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Ensure filename has .py extension if not provided
+    filename = request.filename.strip()
+    if not filename.endswith('.py'):
+        filename = f"{filename}.py"
+    
+    # Update the custom filename
+    upload.custom_filename = filename
+    db.commit()
+    
+    return {"message": f"Filename set to {filename}", "filename": filename}

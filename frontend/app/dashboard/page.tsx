@@ -24,6 +24,8 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null)
   const [showLanguageModal, setShowLanguageModal] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null)
+  const [showFilenameModal, setShowFilenameModal] = useState(false)
+  const [customFilename, setCustomFilename] = useState('')
 
   const handleUploadComplete = async (uploadResponse: UploadResponse) => {
     setUpload(uploadResponse)
@@ -33,14 +35,27 @@ export default function DashboardPage() {
   const handleLanguageSelect = async (language: string) => {
     setSelectedLanguage(language)
     setShowLanguageModal(false)
+    setShowFilenameModal(true)
+  }
+
+  const handleFilenameSubmit = async () => {
+    if (!customFilename.trim()) {
+      setError('Please enter a filename')
+      return
+    }
+
     setLoading(true)
     setError(null)
 
     try {
-      // Use AI analysis workflow with selected language
-      const analyzeResponse = await apiService.analyzeDocument(upload!.id, language)
+      // Set the custom filename
+      await apiService.setFilename(upload!.id, customFilename.trim())
+      
+      // Now proceed with AI analysis
+      const analyzeResponse = await apiService.analyzeDocument(upload!.id, selectedLanguage!)
       setAICandidates(analyzeResponse.candidates)
       setCurrentStep('ai_suggestions')
+      setShowFilenameModal(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to analyze document. Please check your OpenAI API key and billing.')
     } finally {
@@ -440,12 +455,60 @@ export default function DashboardPage() {
                 >
                   C Programming (CodeBlocks)
                 </button>
-                
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Filename Input Modal */}
+      {showFilenameModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-gray-900 rounded-2xl p-8 max-w-md w-full border border-white/10"
+          >
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <FileText className="w-8 h-8 text-white" />
+              </div>
+              
+              <h2 className="text-2xl font-bold text-white mb-2">
+                Enter Python Filename
+              </h2>
+              <p className="text-white/80 mb-6">
+                What would you like to name your Python file? (e.g., exp5, assignment1, lab3)
+              </p>
+              
+              <div className="mb-6">
+                <input
+                  type="text"
+                  value={customFilename}
+                  onChange={(e) => setCustomFilename(e.target.value)}
+                  placeholder="Enter filename (without .py)"
+                  className="w-full px-4 py-3 bg-gray-800 border border-white/20 rounded-xl text-white placeholder-white/60 focus:outline-none focus:border-blue-500 transition-colors"
+                  autoFocus
+                />
+                <p className="text-sm text-white/60 mt-2">
+                  The .py extension will be added automatically
+                </p>
+              </div>
+              
+              <div className="flex space-x-3">
                 <button
-                  onClick={() => handleLanguageSelect('webdev')}
-                  className="w-full bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300"
+                  onClick={() => setShowFilenameModal(false)}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300"
                 >
-                  Web Development (VS Code)
+                  Cancel
+                </button>
+                <button
+                  onClick={handleFilenameSubmit}
+                  disabled={loading || !customFilename.trim()}
+                  className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300"
+                >
+                  {loading ? 'Processing...' : 'Continue'}
                 </button>
               </div>
             </div>

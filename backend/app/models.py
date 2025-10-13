@@ -30,6 +30,7 @@ class Upload(Base):
     file_type = Column(String, nullable=False)  # 'docx' or 'pdf'
     file_size = Column(Integer, nullable=False)
     language = Column(String, nullable=True)  # 'python', 'java', 'c', 'webdev'
+    custom_filename = Column(String, nullable=True)  # User-specified filename for code
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships

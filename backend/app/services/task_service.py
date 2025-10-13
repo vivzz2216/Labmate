@@ -160,8 +160,16 @@ class TaskService:
             upload = db.query(Upload).filter(Upload.id == job.upload_id).first()
             user = db.query(User).filter(User.id == upload.user_id).first() if upload else None
             
-            username = user.name if user else "User"
-            filename = f"exp{job.id}.py"  # Generate filename like exp5.py
+            # Extract first name from full name
+            if user and user.name:
+                username = user.name.split()[0]  # Get first name only
+            else:
+                username = "User"
+            
+            # Use custom filename if provided, otherwise generate default
+            filename = getattr(upload, 'custom_filename', None) if upload else None
+            if not filename:
+                filename = f"exp{job.id}.py"  # Default filename like exp5.py
             
             screenshot_success, screenshot_path, width, height = await screenshot_service.generate_screenshot(
                 task.user_code, output, job.theme, job.id, username, filename
