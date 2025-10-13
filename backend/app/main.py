@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 import os
 from .config import settings
 from .database import engine, Base
-from .routers import upload, parse, run, compose, download, analyze, tasks, auth, assignments, basic_auth
+from .routers import upload, parse, run, compose, download, analyze, tasks, assignments, basic_auth
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -43,7 +43,6 @@ app.include_router(compose.router, prefix="/api", tags=["compose"])
 app.include_router(download.router, prefix="/api", tags=["download"])
 app.include_router(analyze.router, prefix="/api", tags=["analyze"])
 app.include_router(tasks.router, prefix="/api", tags=["tasks"])
-app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(assignments.router, prefix="/api/assignments", tags=["assignments"])
 app.include_router(basic_auth.router, prefix="/api/basic-auth", tags=["basic-auth"])
 

@@ -27,8 +27,7 @@
     "lucide-react": "^0.294.0",
     "tailwind-merge": "^2.0.0",
     "tailwindcss-animate": "^1.0.7",
-    "react-dropzone": "^14.2.3",
-    "firebase": "^9.23.0"
+    "react-dropzone": "^14.2.3"
   },
   "devDependencies": {
     "@types/node": "^20.9.0",
