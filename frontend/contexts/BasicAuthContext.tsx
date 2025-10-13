@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(userData)
       
       // Redirect to dashboard
-      router.push('/user-dashboard')
+      router.push('/dashboard')
     } catch (error) {
       console.error('Signup failed:', error)
       throw error
@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(userData)
       
       // Redirect to dashboard
-      router.push('/user-dashboard')
+      router.push('/dashboard')
     } catch (error) {
       console.error('Login failed:', error)
       throw error
