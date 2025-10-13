@@ -2,7 +2,7 @@ import os
 import uuid
 from typing import List, Dict, Any, Tuple
 from sqlalchemy.orm import Session
-from ..models import AIJob, AITask, Upload
+from ..models import AIJob, AITask, Upload, User
 from ..schemas import TaskSubmission, TaskResult
 from ..services.analysis_service import analysis_service
 from ..services.validator_service import validator_service
@@ -156,8 +156,15 @@ class TaskService:
         
         # Generate screenshot
         if success and output:
+            # Get user information for personalized display
+            upload = db.query(Upload).filter(Upload.id == job.upload_id).first()
+            user = db.query(User).filter(User.id == upload.user_id).first() if upload else None
+            
+            username = user.name if user else "User"
+            filename = f"exp{job.id}.py"  # Generate filename like exp5.py
+            
             screenshot_success, screenshot_path, width, height = await screenshot_service.generate_screenshot(
-                task.user_code, output, job.theme, job.id
+                task.user_code, output, job.theme, job.id, username, filename
             )
             
             if screenshot_success:

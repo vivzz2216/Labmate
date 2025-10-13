@@ -20,7 +20,9 @@ class ScreenshotService:
         code: str, 
         output: str, 
         theme: str = "idle",
-        job_id: int = None
+        job_id: int = None,
+        username: str = "User",
+        filename: str = "new.py"
     ) -> Tuple[bool, str, int, int]:
         """
         Generate screenshot of code and output
@@ -45,7 +47,7 @@ class ScreenshotService:
             
             # Load and render template
             html_content = await self._render_template(
-                highlighted_code, output, theme
+                highlighted_code, output, theme, username, filename
             )
             
             # Take screenshot
@@ -152,7 +154,9 @@ class ScreenshotService:
         self, 
         highlighted_code: str, 
         output: str, 
-        theme: str
+        theme: str,
+        username: str = "User",
+        filename: str = "new.py"
     ) -> str:
         """Render HTML template with code and output"""
         
@@ -176,7 +180,9 @@ class ScreenshotService:
         
         html_content = template.render(
             code_content=highlighted_code,
-            output_content=clean_output
+            output_content=clean_output,
+            username=username,
+            filename=filename
         )
         
         return html_content
