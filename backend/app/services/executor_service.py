@@ -21,46 +21,16 @@ class ExecutorService:
             self.client = None
             self.image = settings.DOCKER_IMAGE
     
-    async def execute_code(self, code: str, language: str = "python") -> Tuple[bool, str, str, int]:
+    async def execute_code(self, code: str) -> Tuple[bool, str, str, int]:
         """
-        Execute code in a sandboxed subprocess based on language
-        
-        Args:
-            code: Code to execute
-            language: Programming language ('python', 'java', 'c', 'webdev')
+        Execute Python code in a sandboxed subprocess
         
         Returns:
             Tuple of (success, output_text, logs, exit_code)
         """
         
-        # For web development, we don't actually execute the code
-        # The web execution service handles that separately
-        if language == "webdev":
-            return await self._execute_web_code(code)
-        
-        # For other languages, use subprocess execution
+        # Use subprocess execution (simpler than Docker-in-Docker)
         return await self._subprocess_execute(code)
-    
-    async def _execute_web_code(self, code: str) -> Tuple[bool, str, str, int]:
-        """Handle web development code execution"""
-        
-        # For web development, we consider it successful if it's valid HTML/CSS/JS
-        # The actual execution and screenshot generation happens in the screenshot service
-        
-        # Basic validation
-        if not code.strip():
-            return False, "", "Empty web code", 1
-        
-        # Check if it looks like web code
-        code_lower = code.lower().strip()
-        if any(web_indicator in code_lower for web_indicator in [
-            '<html', '<div', '<p', '<h1', '<h2', '<h3', '<body', '<head',
-            'color:', 'background:', 'margin:', 'padding:', 'font-',
-            'function(', 'var ', 'let ', 'const ', '<script'
-        ]):
-            return True, "Web code ready for execution", "Web development code validated", 0
-        else:
-            return False, "", "Code does not appear to be valid web development code", 1
     
     async def _subprocess_execute(self, code: str) -> Tuple[bool, str, str, int]:
         """Execute code using subprocess (safer than Docker-in-Docker for MVP)"""

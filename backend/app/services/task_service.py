@@ -19,8 +19,7 @@ class TaskService:
         mapping = {
             'python': 'idle',
             'java': 'notepad',
-            'c': 'codeblocks',
-            'webdev': 'vscode'
+            'c': 'codeblocks'
         }
         return mapping.get(language, 'idle')  # Default to idle
     
@@ -140,11 +139,8 @@ class TaskService:
     async def _execute_code_task(self, task: AITask, job: AIJob, db: Session):
         """Execute code for a task and generate screenshots"""
         
-        # Validate code based on language
-        upload = db.query(Upload).filter(Upload.id == job.upload_id).first()
-        language = upload.language if upload else "python"
-        
-        is_valid, error_msg = validator_service.validate_code(task.user_code, language)
+        # Validate code
+        is_valid, error_msg = validator_service.validate_code(task.user_code)
         if not is_valid:
             task.status = "failed"
             task.caption = f"Code validation failed: {error_msg}"
@@ -152,7 +148,7 @@ class TaskService:
             return
         
         # Execute code
-        success, output, logs, exit_code = await executor_service.execute_code(task.user_code, language)
+        success, output, logs, exit_code = await executor_service.execute_code(task.user_code)
         
         # Store execution results
         task.stdout = output
@@ -160,12 +156,8 @@ class TaskService:
         
         # Generate screenshot
         if success and output:
-            # Get the language from the upload record
-            upload = db.query(Upload).filter(Upload.id == job.upload_id).first()
-            language = upload.language if upload else "python"
-            
             screenshot_success, screenshot_path, width, height = await screenshot_service.generate_screenshot(
-                task.user_code, output, job.theme, job.id, language
+                task.user_code, output, job.theme, job.id
             )
             
             if screenshot_success:

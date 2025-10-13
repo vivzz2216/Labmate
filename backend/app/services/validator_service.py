@@ -29,14 +29,10 @@ class ValidatorService:
             '__subclasses__', '__mro__', '__dict__'
         }
     
-    def validate_code(self, code: str, language: str = "python") -> Tuple[bool, str]:
+    def validate_code(self, code: str) -> Tuple[bool, str]:
         """
-        Validate code for safety based on language
+        Validate Python code for safety
         
-        Args:
-            code: Code to validate
-            language: Programming language ('python', 'java', 'c', 'webdev')
-            
         Returns:
             Tuple of (is_valid, error_message)
         """
@@ -44,76 +40,6 @@ class ValidatorService:
         # Check code length
         if len(code) > settings.MAX_CODE_LENGTH:
             return False, f"Code too long. Maximum {settings.MAX_CODE_LENGTH} characters allowed."
-        
-        # For web development, use different validation
-        if language == "webdev":
-            return self._validate_web_code(code)
-        
-        # For other languages, use Python validation (can be extended later)
-        return self._validate_python_code(code)
-    
-    def _validate_web_code(self, code: str) -> Tuple[bool, str]:
-        """Validate web development code (HTML/CSS/JS) - Educational Focus"""
-        
-        # Basic web code validation
-        if not code.strip():
-            return False, "Empty code"
-        
-        # Check code length
-        if len(code) > settings.MAX_CODE_LENGTH:
-            return False, f"Code too long. Maximum {settings.MAX_CODE_LENGTH} characters allowed."
-        
-        # Only check for extremely dangerous patterns that could cause real harm
-        # Be more permissive for educational web development
-        extremely_dangerous_patterns = [
-            r'<script[^>]*>.*eval\s*\(',  # eval in script tags
-            r'<script[^>]*>.*document\.cookie.*=',  # cookie manipulation
-            r'<script[^>]*>.*window\.location\.href\s*=',  # forced page redirection
-            r'<script[^>]*>.*XMLHttpRequest.*open.*http',  # external HTTP requests
-            r'<iframe[^>]*src\s*=\s*["\']http',  # external iframe embedding
-            r'<object[^>]*data\s*=\s*["\']http',  # external object embedding
-            r'<embed[^>]*src\s*=\s*["\']http',  # external embed tags
-            r'javascript:\s*void',  # javascript: void URLs
-            r'data:text/html.*base64',  # data URLs with base64 HTML
-        ]
-        
-        for pattern in extremely_dangerous_patterns:
-            if re.search(pattern, code, re.IGNORECASE | re.DOTALL):
-                return False, f"Extremely dangerous web code detected"
-        
-        # For educational purposes, be very permissive
-        # Accept any code that looks like web development
-        
-        # HTML indicators
-        html_indicators = ['<html', '<head', '<body', '<div', '<p', '<h1', '<h2', '<h3', '<h4', '<h5', '<h6', 
-                          '<span', '<a', '<img', '<ul', '<ol', '<li', '<table', '<tr', '<td', '<th', 
-                          '<form', '<input', '<button', '<select', '<option', '<textarea', '<label']
-        
-        # CSS indicators
-        css_indicators = ['color:', 'background:', 'margin:', 'padding:', 'font-', 'border:', 'width:', 'height:', 
-                         'display:', 'position:', 'float:', 'text-align:', 'font-size:', 'font-weight:']
-        
-        # JavaScript indicators
-        js_indicators = ['function', 'var ', 'let ', 'const ', 'if (', 'for (', 'while (', 'return', 'alert(', 
-                        'console.log', 'document.', 'window.', 'addEventListener', 'onclick', 'onload']
-        
-        # Check if code contains any web development indicators
-        code_lower = code.lower()
-        
-        has_html = any(indicator in code_lower for indicator in html_indicators)
-        has_css = any(indicator in code_lower for indicator in css_indicators)
-        has_js = any(indicator in code_lower for indicator in js_indicators)
-        
-        # If it has any web development characteristics, accept it
-        if has_html or has_css or has_js:
-            return True, ""
-        
-        # Even if it doesn't match patterns, be permissive for educational content
-        # Accept any non-empty code that might be web-related
-        return True, ""
-    
-    def _validate_python_code(self, code: str) -> Tuple[bool, str]:
-        """Validate Python code for safety"""
         
         # Parse the code into AST
         try:
@@ -132,6 +58,7 @@ class ValidatorService:
             return False, error_msg
         
         return True, ""
+    
     
     def _validate_ast(self, tree: ast.AST) -> Tuple[bool, str]:
         """Validate AST nodes recursively"""
