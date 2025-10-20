@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..models import Upload, Job, Screenshot
+from ..models import Upload, Job, Screenshot, User
 from ..schemas import RunRequest, RunResponse, JobStatus
 from ..services.parser_service import parser_service
 from ..services.validator_service import validator_service
@@ -66,8 +66,16 @@ async def run_tasks(
                     db.commit()
                     continue
                 
+                # Determine language based on theme
+                if request.theme == "codeblocks":
+                    language = "c"
+                elif request.theme == "notepad":
+                    language = "java"
+                else:
+                    language = "python"
+                
                 # Execute code
-                success, output, error, execution_time = await executor_service.execute_code(code_snippet)
+                success, output, error, execution_time = await executor_service.execute_code(code_snippet, language)
                 
                 if success:
                     job.status = "completed"
@@ -76,8 +84,22 @@ async def run_tasks(
                     
                     # Generate screenshot if requested
                     if task_data["requires_screenshot"]:
+                        # Get user information for personalized display
+                        user = db.query(User).filter(User.id == upload.user_id).first() if upload.user_id else None
+                        
+                        # Extract first name from full name
+                        if user and user.name:
+                            username = user.name.split()[0]  # Get first name only (e.g., "Vivek" from "Vivek Pillai")
+                        else:
+                            username = "User"
+                        
+                        # Use custom filename if provided, otherwise generate default
+                        filename = getattr(upload, 'custom_filename', None) if upload else None
+                        if not filename:
+                            filename = f"task{task_data['id']}.py"  # Default filename like task1.py
+                        
                         screenshot_success, screenshot_path, width, height = await screenshot_service.generate_screenshot(
-                            code_snippet, output, request.theme, job.id
+                            code_snippet, output, request.theme, job.id, username, filename
                         )
                         
                         if screenshot_success:

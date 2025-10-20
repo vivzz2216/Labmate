@@ -4,6 +4,7 @@ from typing import Tuple
 from playwright.async_api import async_playwright
 from pygments import highlight
 from pygments.lexers import PythonLexer
+from pygments.lexers import JavaLexer, CLexer
 from pygments.formatters import HtmlFormatter
 from jinja2 import Template
 from ..config import settings
@@ -80,9 +81,6 @@ class ScreenshotService:
                 'codeblocks': CLexer()
             }
             
-            # Import additional lexers
-            from pygments.lexers import JavaLexer, CLexer
-            
             lexer = lexer_map.get(theme, PythonLexer())
             
             formatter = HtmlFormatter(
@@ -119,15 +117,19 @@ class ScreenshotService:
             elif theme == 'codeblocks':
                 # C CodeBlocks colors
                 replacements = {
-                    'class="k"': 'class="keyword"',  # keywords - BLUE
-                    'class="s"': 'class="string"',   # strings - ORANGE
-                    'class="c"': 'class="comment"',  # comments - GREEN
-                    'class="m"': 'class="number"',   # numbers - LIGHT GREEN
-                    'class="nf"': 'class="function"', # functions - YELLOW
-                    'class="n"': 'class="variable"', # variables - LIGHT BLUE
-                    'class="o"': 'class="operator"', # operators - WHITE
-                    'class="cp"': 'class="preprocessor"', # preprocessor - PURPLE
-                    'class="nb"': 'class="macro"', # macros - CYAN
+                    'class="k"': 'class="keyword"',  # keywords - Bold Navy Blue
+                    'class="s"': 'class="string"',   # strings - Light Navy Blue
+                    'class="c"': 'class="comment"',  # comments - Green
+                    'class="m"': 'class="number"',   # numbers - Dark Red
+                    'class="nf"': 'class="function"', # functions - Black
+                    'class="n"': 'class="variable"', # variables - Black
+                    'class="o"': 'class="operator"', # operators - Black
+                    'class="cp"': 'class="preprocessor"', # preprocessor - Light Green
+                    'class="nb"': 'class="macro"', # macros - Light Green
+                    'class="c1"': 'class="preprocessor"', # Alternative preprocessor class
+                    'class="cpf"': 'class="preprocessor"', # Preprocessor function
+                    'class="kt"': 'class="keyword"', # Type keywords
+                    'class="kr"': 'class="keyword"', # Reserved keywords
                 }
             else:
                 # Default replacements
@@ -229,6 +231,9 @@ class ScreenshotService:
                 
                 # Set viewport size for consistent screenshots
                 await page.set_viewport_size({"width": 900, "height": 600})
+                
+                # Replace relative URLs with absolute URLs so images can load
+                html_content = html_content.replace('src="/public/', 'src="http://localhost:8000/public/')
                 
                 # Set content
                 await page.set_content(html_content)

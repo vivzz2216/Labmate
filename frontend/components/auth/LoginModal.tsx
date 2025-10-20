@@ -60,7 +60,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           >
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-white">
-                {isLogin ? 'Welcome Back' : 'Create Account'}
+                {isLogin ? 'Welcome Backk' : 'Create Account'}
               </h2>
               <button
                 onClick={onClose}

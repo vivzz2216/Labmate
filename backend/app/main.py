@@ -29,11 +29,13 @@ app.add_middleware(
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 os.makedirs(settings.SCREENSHOT_DIR, exist_ok=True)
 os.makedirs(settings.REPORT_DIR, exist_ok=True)
+os.makedirs("/app/public", exist_ok=True)
 
 # Mount static files
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 app.mount("/screenshots", StaticFiles(directory=settings.SCREENSHOT_DIR), name="screenshots")
 app.mount("/reports", StaticFiles(directory=settings.REPORT_DIR), name="reports")
+app.mount("/public", StaticFiles(directory="/app/public"), name="public")
 
 # Include routers
 app.include_router(upload.router, prefix="/api", tags=["upload"])

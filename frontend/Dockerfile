@@ -1,25 +1,24 @@
-FROM node:18-alpine
-
-# Set working directory
+FROM mirror.gcr.io/library/node:18-alpine AS deps
 WORKDIR /app
-
-# Copy package files
 COPY package*.json ./
+RUN npm ci
 
-# Install all dependencies (including dev dependencies for build)
-RUN npm install
-
-# Copy source code
+FROM mirror.gcr.io/library/node:18-alpine AS builder
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
-# Build the application
 RUN npm run build
 
-# Remove dev dependencies after build
-RUN npm prune --production
+FROM mirror.gcr.io/library/node:18-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+COPY package*.json ./
+RUN npm ci --omit=dev
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/next.config.js ./next.config.js
 
-# Expose port
 EXPOSE 3000
-
-# Start the application
 CMD ["npm", "start"]

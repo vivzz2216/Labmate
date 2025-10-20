@@ -32,7 +32,7 @@ class ParseResponse(BaseModel):
 class RunRequest(BaseModel):
     upload_id: int
     task_ids: List[int]
-    theme: str = Field(default="idle", pattern="^(idle|vscode)$")
+    theme: str = Field(default="idle", pattern="^(idle|vscode|notepad|codeblocks)$")
 
 
 class JobStatus(BaseModel):
@@ -111,7 +111,7 @@ class TaskSubmission(BaseModel):
 class TasksSubmitRequest(BaseModel):
     file_id: int
     tasks: List[TaskSubmission]
-    theme: str = Field(default="idle", pattern="^(idle|vscode)$")
+    theme: str = Field(default="idle", pattern="^(idle|vscode|notepad|codeblocks)$")
     insertion_preference: str = Field(default="below_question")
 
 

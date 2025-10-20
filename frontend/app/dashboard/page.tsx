@@ -278,6 +278,7 @@ export default function DashboardPage() {
                 candidates={aiCandidates}
                 onSubmit={handleAITaskSubmit}
                 onError={handleError}
+                initialTheme={selectedLanguage === 'c' ? 'codeblocks' : selectedLanguage === 'java' ? 'notepad' : 'idle'}
               />
             </div>
           )}
@@ -476,10 +477,14 @@ export default function DashboardPage() {
               </div>
               
               <h2 className="text-2xl font-bold text-white mb-2">
-                Enter Python Filename
+                {selectedLanguage === 'c' ? 'Enter C Filename' : selectedLanguage === 'java' ? 'Enter Java Filename' : 'Enter Python Filename'}
               </h2>
               <p className="text-white/80 mb-6">
-                What would you like to name your Python file? (e.g., exp5, assignment1, lab3)
+                {selectedLanguage === 'c'
+                  ? 'What would you like to name your C file? (e.g., exp5, assignment1, lab3)'
+                  : selectedLanguage === 'java'
+                  ? 'What would you like to name your Java file? (e.g., exp5, assignment1, lab3)'
+                  : 'What would you like to name your Python file? (e.g., exp5, assignment1, lab3)'}
               </p>
               
               <div className="mb-6">
@@ -487,12 +492,16 @@ export default function DashboardPage() {
                   type="text"
                   value={customFilename}
                   onChange={(e) => setCustomFilename(e.target.value)}
-                  placeholder="Enter filename (without .py)"
+                  placeholder={selectedLanguage === 'c' ? 'Enter filename (without .c)'
+                    : selectedLanguage === 'java' ? 'Enter filename (without .java)'
+                    : 'Enter filename (without .py)'}
                   className="w-full px-4 py-3 bg-gray-800 border border-white/20 rounded-xl text-white placeholder-white/60 focus:outline-none focus:border-blue-500 transition-colors"
                   autoFocus
                 />
                 <p className="text-sm text-white/60 mt-2">
-                  The .py extension will be added automatically
+                  {selectedLanguage === 'c' ? 'The .c extension will be added automatically'
+                    : selectedLanguage === 'java' ? 'The .java extension will be added automatically'
+                    : 'The .py extension will be added automatically'}
                 </p>
               </div>
               

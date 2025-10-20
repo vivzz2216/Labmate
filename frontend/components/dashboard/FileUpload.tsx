@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress'
 import { Card, CardContent } from '@/components/ui/card'
 import { Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react'
 import { apiService, type UploadResponse } from '@/lib/api'
+import { useAuth } from '@/contexts/BasicAuthContext'
 import { formatFileSize } from '@/lib/utils'
 
 interface FileUploadProps {
@@ -16,6 +17,7 @@ interface FileUploadProps {
 }
 
 export default function FileUpload({ onUploadComplete, onError }: FileUploadProps) {
+  const { user } = useAuth()
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadedFile, setUploadedFile] = useState<UploadResponse | null>(null)
@@ -39,7 +41,7 @@ export default function FileUpload({ onUploadComplete, onError }: FileUploadProp
         })
       }, 200)
 
-      const upload = await apiService.uploadFile(file)
+      const upload = await apiService.uploadFile(file, user?.id)
       
       clearInterval(progressInterval)
       setUploadProgress(100)

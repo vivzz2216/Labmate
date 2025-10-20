@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM mirror.gcr.io/library/python:3.10-slim
 
 # Install system dependencies including Playwright dependencies
 RUN apt-get update && apt-get install -y \
@@ -44,6 +44,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
+
+# Explicitly copy public images
+COPY app/public /app/public
 
 # Create necessary directories
 RUN mkdir -p /app/uploads /app/screenshots /app/reports

@@ -22,12 +22,13 @@ interface AISuggestionsPanelProps {
   candidates: AITaskCandidate[]
   onSubmit: (submissions: TaskSubmission[], theme: string, insertionPreference: string) => void
   onError: (error: string) => void
+  initialTheme?: string
 }
 
-export default function AISuggestionsPanel({ candidates, onSubmit, onError }: AISuggestionsPanelProps) {
+export default function AISuggestionsPanel({ candidates, onSubmit, onError, initialTheme }: AISuggestionsPanelProps) {
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set())
   const [taskSubmissions, setTaskSubmissions] = useState<Map<string, TaskSubmission>>(new Map())
-  const [theme, setTheme] = useState<string>('idle')
+  const [theme, setTheme] = useState<string>(initialTheme || 'idle')
   const [insertionPreference, setInsertionPreference] = useState<string>('below_question')
   const [followUpAnswers, setFollowUpAnswers] = useState<Map<string, string>>(new Map())
   const [editingCode, setEditingCode] = useState<Set<string>>(new Set())
@@ -140,8 +141,9 @@ export default function AISuggestionsPanel({ candidates, onSubmit, onError }: AI
                 onChange={(e) => setTheme(e.target.value)}
                 className="w-full p-2 border border-white/20 rounded bg-gray-800 text-white"
               >
-                <option value="idle">IDLE</option>
-                <option value="vscode">VS Code</option>
+                <option value="idle">Python IDLE</option>
+                <option value="notepad">Java Notepad</option>
+                <option value="codeblocks">C Code::Blocks</option>
               </select>
             </div>
             <div>

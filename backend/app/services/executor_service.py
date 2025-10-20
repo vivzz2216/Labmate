@@ -21,19 +21,54 @@ class ExecutorService:
             self.client = None
             self.image = settings.DOCKER_IMAGE
     
-    async def execute_code(self, code: str) -> Tuple[bool, str, str, int]:
+    async def execute_code(self, code: str, language: str = "python") -> Tuple[bool, str, str, int]:
         """
-        Execute Python code in a sandboxed subprocess
+        Execute code in a sandboxed subprocess
+        
+        Args:
+            code: Code to execute
+            language: Programming language ('python', 'c', 'java')
         
         Returns:
             Tuple of (success, output_text, logs, exit_code)
         """
         
         # Use subprocess execution (simpler than Docker-in-Docker)
-        return await self._subprocess_execute(code)
+        return await self._subprocess_execute(code, language)
     
-    async def _subprocess_execute(self, code: str) -> Tuple[bool, str, str, int]:
+    async def _subprocess_execute(self, code: str, language: str = "python") -> Tuple[bool, str, str, int]:
         """Execute code using subprocess (safer than Docker-in-Docker for MVP)"""
+        temp_file = None
+        executable_file = None
+        
+        try:
+            if language == "c":
+                # For C code, compile and run
+                return await self._execute_c_code(code)
+            elif language == "java":
+                # For Java code, compile and run
+                return await self._execute_java_code(code)
+            else:
+                # Default to Python
+                return await self._execute_python_code(code)
+                
+        except Exception as e:
+            return False, "", f"Execution error: {str(e)}", 1
+        finally:
+            # Clean up temporary files
+            if temp_file and os.path.exists(temp_file):
+                try:
+                    os.unlink(temp_file)
+                except:
+                    pass
+            if executable_file and os.path.exists(executable_file):
+                try:
+                    os.unlink(executable_file)
+                except:
+                    pass
+    
+    async def _execute_python_code(self, code: str) -> Tuple[bool, str, str, int]:
+        """Execute Python code"""
         temp_file = None
         
         try:
@@ -75,14 +110,172 @@ class ExecutorService:
                 
         except Exception as e:
             return False, "", f"Execution error: {str(e)}", 1
-            
         finally:
-            # Cleanup temp file
             if temp_file and os.path.exists(temp_file):
                 try:
                     os.unlink(temp_file)
                 except:
                     pass
+    
+    async def _execute_c_code(self, code: str) -> Tuple[bool, str, str, int]:
+        """Execute C code by compiling and running"""
+        temp_c_file = None
+        executable_file = None
+        
+        try:
+            # Create temporary C file
+            with tempfile.NamedTemporaryFile(
+                mode='w',
+                suffix='.c',
+                delete=False,
+                encoding='utf-8'
+            ) as f:
+                f.write(code)
+                temp_c_file = f.name
+            
+            # Create executable filename
+            executable_file = temp_c_file.replace('.c', '')
+            
+            # Compile C code
+            compile_process = await asyncio.create_subprocess_exec(
+                'gcc',
+                temp_c_file,
+                '-o',
+                executable_file,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            
+            compile_stdout, compile_stderr = await compile_process.communicate()
+            
+            if compile_process.returncode != 0:
+                # Compilation failed
+                errors = compile_stderr.decode('utf-8') if compile_stderr else ""
+                return False, "", f"Compilation error: {errors}", compile_process.returncode
+            
+            # Run the executable
+            run_process = await asyncio.create_subprocess_exec(
+                executable_file,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            
+            try:
+                stdout_data, stderr_data = await asyncio.wait_for(
+                    run_process.communicate(),
+                    timeout=30.0  # 30 second timeout
+                )
+                
+                output = stdout_data.decode('utf-8') if stdout_data else ""
+                errors = stderr_data.decode('utf-8') if stderr_data else ""
+                exit_code = run_process.returncode
+                
+                success = exit_code == 0
+                return success, output, errors, exit_code
+                
+            except asyncio.TimeoutError:
+                run_process.kill()
+                await run_process.wait()
+                return False, "", "Execution timeout (30s limit)", 124
+                
+        except Exception as e:
+            return False, "", f"Execution error: {str(e)}", 1
+        finally:
+            if temp_c_file and os.path.exists(temp_c_file):
+                try:
+                    os.unlink(temp_c_file)
+                except:
+                    pass
+            if executable_file and os.path.exists(executable_file):
+                try:
+                    os.unlink(executable_file)
+                except:
+                    pass
+    
+    async def _execute_java_code(self, code: str) -> Tuple[bool, str, str, int]:
+        """Execute Java code by compiling and running"""
+        temp_java_file = None
+        
+        try:
+            # Extract class name from code (simple approach)
+            class_name = "Main"  # Default
+            for line in code.split('\n'):
+                if 'public class' in line:
+                    parts = line.split()
+                    if len(parts) >= 3:
+                        class_name = parts[2].split('{')[0].strip()
+                    break
+            
+            # Create temporary Java file
+            with tempfile.NamedTemporaryFile(
+                mode='w',
+                suffix='.java',
+                delete=False,
+                encoding='utf-8'
+            ) as f:
+                f.write(code)
+                temp_java_file = f.name
+            
+            # Compile Java code
+            compile_process = await asyncio.create_subprocess_exec(
+                'javac',
+                temp_java_file,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            
+            compile_stdout, compile_stderr = await compile_process.communicate()
+            
+            if compile_process.returncode != 0:
+                # Compilation failed
+                errors = compile_stderr.decode('utf-8') if compile_stderr else ""
+                return False, "", f"Compilation error: {errors}", compile_process.returncode
+            
+            # Run the Java program
+            java_dir = os.path.dirname(temp_java_file)
+            run_process = await asyncio.create_subprocess_exec(
+                'java',
+                '-cp',
+                java_dir,
+                class_name,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            
+            try:
+                stdout_data, stderr_data = await asyncio.wait_for(
+                    run_process.communicate(),
+                    timeout=30.0  # 30 second timeout
+                )
+                
+                output = stdout_data.decode('utf-8') if stdout_data else ""
+                errors = stderr_data.decode('utf-8') if stderr_data else ""
+                exit_code = run_process.returncode
+                
+                success = exit_code == 0
+                return success, output, errors, exit_code
+                
+            except asyncio.TimeoutError:
+                run_process.kill()
+                await run_process.wait()
+                return False, "", "Execution timeout (30s limit)", 124
+                
+        except Exception as e:
+            return False, "", f"Execution error: {str(e)}", 1
+        finally:
+            if temp_java_file and os.path.exists(temp_java_file):
+                try:
+                    os.unlink(temp_java_file)
+                except:
+                    pass
+            # Clean up .class files
+            if temp_java_file:
+                class_file = temp_java_file.replace('.java', '.class')
+                if os.path.exists(class_file):
+                    try:
+                        os.unlink(class_file)
+                    except:
+                        pass
     
     async def _mock_execute(self, code: str) -> Tuple[bool, str, str, int]:
         """Mock execution when Docker is not available"""

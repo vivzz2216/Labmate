@@ -32,9 +32,14 @@ class TaskService:
         if not upload:
             raise ValueError("Upload not found")
         
-        # Map language to theme if not provided
-        if not theme and upload.language:
-            theme = self._map_language_to_theme(upload.language)
+        # Normalize theme based on upload language (force correct theme for non-Python)
+        if upload.language:
+            lang_theme = self._map_language_to_theme(upload.language)
+            if not theme or theme not in ["idle", "vscode", "notepad", "codeblocks"]:
+                theme = lang_theme
+            # If language is C/Java but theme is still a Python theme, override
+            if upload.language in ["c", "java"] and theme in ["idle", "vscode"]:
+                theme = lang_theme
         
         # Create AI job record
         job = AIJob(
@@ -139,23 +144,38 @@ class TaskService:
     async def _execute_code_task(self, task: AITask, job: AIJob, db: Session):
         """Execute code for a task and generate screenshots"""
         
-        # Validate code
-        is_valid, error_msg = validator_service.validate_code(task.user_code)
-        if not is_valid:
-            task.status = "failed"
-            task.caption = f"Code validation failed: {error_msg}"
-            db.commit()
-            return
-        
-        # Execute code
-        success, output, logs, exit_code = await executor_service.execute_code(task.user_code)
+        is_python_theme = job.theme in ["idle", "vscode"]
+
+        # Determine language based on theme
+        if job.theme == "codeblocks":
+            language = "c"
+        elif job.theme == "notepad":
+            language = "java"
+        else:
+            language = "python"
+
+        # For Python themes, validate and execute; for C/Java themes, execute directly
+        if is_python_theme:
+            # Validate code
+            is_valid, error_msg = validator_service.validate_code(task.user_code)
+            if not is_valid:
+                task.status = "failed"
+                task.caption = f"Code validation failed: {error_msg}"
+                db.commit()
+                return
+            
+            # Execute code
+            success, output, logs, exit_code = await executor_service.execute_code(task.user_code, language)
+        else:
+            # Non-Python (e.g., C Code::Blocks, Java Notepad): execute directly without Python validation
+            success, output, logs, exit_code = await executor_service.execute_code(task.user_code, language)
         
         # Store execution results
         task.stdout = output
         task.exit_code = exit_code
         
         # Generate screenshot
-        if success and output:
+        if success:
             # Get user information for personalized display
             upload = db.query(Upload).filter(Upload.id == job.upload_id).first()
             user = db.query(User).filter(User.id == upload.user_id).first() if upload else None
@@ -169,7 +189,17 @@ class TaskService:
             # Use custom filename if provided, otherwise generate default
             filename = getattr(upload, 'custom_filename', None) if upload else None
             if not filename:
-                filename = f"exp{job.id}.py"  # Default filename like exp5.py
+                # Pick sensible default extension based on theme
+                default_ext = ".py" if is_python_theme else (".c" if job.theme == "codeblocks" else ".java")
+                filename = f"exp{job.id}{default_ext}"
+            else:
+                # Ensure extension matches theme if user omitted it
+                if is_python_theme and not filename.endswith(".py"):
+                    filename = f"{filename}.py"
+                if job.theme == "codeblocks" and not filename.endswith(".c"):
+                    filename = f"{filename}.c"
+                if job.theme == "notepad" and not filename.endswith(".java"):
+                    filename = f"{filename}.java"
             
             screenshot_success, screenshot_path, width, height = await screenshot_service.generate_screenshot(
                 task.user_code, output, job.theme, job.id, username, filename

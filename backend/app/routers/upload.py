@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Form
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models import Upload
@@ -21,6 +21,7 @@ class SetFilenameRequest(BaseModel):
 @router.post("/upload", response_model=UploadResponse)
 async def upload_file(
     file: UploadFile = File(...),
+    user_id: int | None = Form(default=None),
     db: Session = Depends(get_db)
 ):
     """Upload a DOCX or PDF file for processing"""
@@ -60,7 +61,8 @@ async def upload_file(
             original_filename=file.filename,
             file_path=file_path,
             file_type=file_extension,
-            file_size=len(file_content)
+            file_size=len(file_content),
+            user_id=user_id
         )
         
         db.add(upload)
@@ -95,10 +97,8 @@ async def set_custom_filename(
     if not upload:
         raise HTTPException(status_code=404, detail="File not found")
     
-    # Ensure filename has .py extension if not provided
+    # Accept filename as provided (frontend will ensure correct extension per language)
     filename = request.filename.strip()
-    if not filename.endswith('.py'):
-        filename = f"{filename}.py"
     
     # Update the custom filename
     upload.custom_filename = filename
