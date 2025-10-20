@@ -10,12 +10,15 @@ class AnalysisService:
     """Service for AI-powered document analysis using OpenAI Chat API"""
     
     def __init__(self):
-        if not settings.OPENAI_API_KEY:
-            raise ValueError("OPENAI_API_KEY environment variable is required")
+        self.api_key = settings.OPENAI_API_KEY
+        self.client = None
         
-        import openai
-        openai.api_key = settings.OPENAI_API_KEY
-        self.client = openai
+        if self.api_key:
+            import openai
+            openai.api_key = self.api_key
+            self.client = openai
+        else:
+            print("Warning: OPENAI_API_KEY not set. AI analysis features will be disabled.")
         
         # Model selection for different tasks
         self.analysis_model = "gpt-4o"  # Best for document analysis (fallback to gpt-4o-mini)
@@ -52,6 +55,10 @@ class AnalysisService:
         """
         Analyze uploaded document and return AI-generated task candidates
         """
+        if not self.client:
+            # Return empty list if OpenAI API key is not available
+            return []
+            
         try:
             # Parse the document to extract text and structure
             parsed_content = await parser_service.parse_file(file_path, file_type)
@@ -86,6 +93,9 @@ class AnalysisService:
     async def _generate_task_candidates(self, document_text: str) -> List[Dict[str, Any]]:
         """Generate task candidates using OpenAI Chat API"""
         
+        if not self.client:
+            return []
+            
         system_prompt = """You are an expert computer science teaching assistant analyzing programming assignments. 
 
 Your task is to analyze the provided assignment document and identify opportunities for:
