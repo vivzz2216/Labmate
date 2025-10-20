@@ -35,7 +35,29 @@ export default function DashboardPage() {
   const handleLanguageSelect = async (language: string) => {
     setSelectedLanguage(language)
     setShowLanguageModal(false)
-    setShowFilenameModal(true)
+    
+    // Skip filename modal for Java since we extract class name from code
+    if (language === 'java') {
+      setLoading(true)
+      setError(null)
+
+      try {
+        // Set a default filename for Java (will be overridden by class name extraction)
+        await apiService.setFilename(upload!.id, 'Main')
+        
+        // Now proceed with AI analysis
+        const analyzeResponse = await apiService.analyzeDocument(upload!.id, language)
+        setAICandidates(analyzeResponse.candidates)
+        setCurrentStep('ai_suggestions')
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to analyze document. Please check your OpenAI API key and billing.')
+      } finally {
+        setLoading(false)
+      }
+    } else {
+      // Show filename modal for Python and C
+      setShowFilenameModal(true)
+    }
   }
 
   const handleFilenameSubmit = async () => {
