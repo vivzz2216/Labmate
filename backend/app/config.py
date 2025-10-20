@@ -4,8 +4,8 @@ import os
 
 
 class Settings(BaseSettings):
-    # Database
-    DATABASE_URL: str = "postgresql://labmate:labmate_password@postgres:5432/labmate_db"
+    # Database - Railway will provide DATABASE_URL environment variable
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://labmate:labmate_password@postgres:5432/labmate_db")
     
     # Security
     BETA_KEY: str = "your_beta_key_here"
