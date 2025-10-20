@@ -53,8 +53,12 @@ COPY backend/app/public /app/public
 # Create necessary directories
 RUN mkdir -p /app/uploads /app/screenshots /app/reports
 
+# Copy startup script
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
 # Expose port (Railway will set PORT environment variable)
-EXPOSE $PORT
+EXPOSE 8000
 
 # Run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "$PORT"]
+CMD ["/app/start.sh"]
