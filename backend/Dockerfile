@@ -1,10 +1,12 @@
 FROM mirror.gcr.io/library/python:3.10-slim
 
-# Install system dependencies including Playwright dependencies
+# Install system dependencies including Playwright dependencies and Java
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     libpq-dev \
+    # Java JDK for Java code execution
+    default-jdk \
     # Playwright dependencies
     wget \
     ca-certificates \
