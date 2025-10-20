@@ -43,6 +43,15 @@ class ScreenshotService:
             screenshot_dir = os.path.join(settings.SCREENSHOT_DIR, str(job_id) if job_id else "temp")
             os.makedirs(screenshot_dir, exist_ok=True)
             
+            # For Java/C themes, extract the class name from code to use as filename
+            if theme == 'notepad':  # Java
+                class_name = self._extract_java_class_name(code)
+                if class_name:
+                    filename = f"{class_name}.java"
+            elif theme == 'codeblocks':  # C
+                # Keep existing filename logic for C
+                pass
+            
             # Generate syntax-highlighted HTML
             highlighted_code = self._highlight_code(code, theme)
             
@@ -188,6 +197,22 @@ class ScreenshotService:
         )
         
         return html_content
+    
+    def _extract_java_class_name(self, code: str) -> str:
+        """Extract the public class name from Java code"""
+        for line in code.split('\n'):
+            line = line.strip()
+            if line.startswith('public class') and '{' in line:
+                # Extract class name from "public class ClassName {"
+                parts = line.split()
+                if len(parts) >= 3:
+                    return parts[2].split('{')[0].strip()
+            elif line.startswith('class') and '{' in line:
+                # Handle "class ClassName {" without public
+                parts = line.split()
+                if len(parts) >= 2:
+                    return parts[1].split('{')[0].strip()
+        return None
     
     def _clean_output(self, output: str) -> str:
         """Clean and format output text to match IDLE shell format"""

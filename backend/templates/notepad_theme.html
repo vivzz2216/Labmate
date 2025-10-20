@@ -318,7 +318,7 @@
         <div class="terminal-header">
             <div class="terminal-title-left">
                 <img src="/public/terminal.png" alt="Terminal" class="terminal-icon">
-                <span class="terminal-title">C:\Users\{{ username or 'user' }}\OneDrive\Desk</span>
+                <span class="terminal-title">Command Prompt</span>
             </div>
             <div class="terminal-controls">
                 <button class="terminal-btn">−</button>
@@ -327,16 +327,17 @@
             </div>
         </div>
         <div class="terminal-content">
-            <div class="terminal-output">
-                <div class="terminal-line">{{ output_content or 'Hello, World!' }}</div>
-                <div class="terminal-line"></div>
-                <div class="terminal-line">Process returned 0 (0x0)   execution time : 0.044 s</div>
-                <div class="terminal-line">Press any key to continue.</div>
+            <div class="terminal-output" id="terminal-output">
+                <!-- Will be populated by JavaScript -->
             </div>
         </div>
     </div>
 
     <script>
+        // Extract filename without extension from the full filename
+        const fullFilename = `{{ filename or 'Helloworld.java' }}`;
+        const fileBaseName = fullFilename.replace('.java', '');
+        
         // Update the editor content with the provided code
         function updateCode(code) {
             const editor = document.getElementById('editor');
@@ -351,21 +352,59 @@
             });
         }
         
-        // Update the output content
-        function updateOutput(output) {
-            const outputElement = document.querySelector('.terminal-line');
-            if (outputElement) {
-                outputElement.textContent = output || 'No output';
-            }
+        // Update the terminal output with Java commands
+        function updateTerminalOutput(output) {
+            const terminalOutput = document.getElementById('terminal-output');
+            if (!terminalOutput) return;
+            
+            terminalOutput.innerHTML = '';
+            
+            // Add javac compile command
+            const compileLine = document.createElement('div');
+            compileLine.className = 'terminal-line';
+            compileLine.textContent = `C:\\Users\\user\\OneDrive\\Desktop>javac ${fullFilename}`;
+            terminalOutput.appendChild(compileLine);
+            
+            // Add blank line
+            const blankLine1 = document.createElement('div');
+            blankLine1.className = 'terminal-line';
+            blankLine1.innerHTML = '&nbsp;';
+            terminalOutput.appendChild(blankLine1);
+            
+            // Add java run command
+            const runLine = document.createElement('div');
+            runLine.className = 'terminal-line';
+            runLine.textContent = `C:\\Users\\user\\OneDrive\\Desktop>java ${fileBaseName}`;
+            terminalOutput.appendChild(runLine);
+            
+            // Add program output
+            const outputLines = (output || 'Hello, World!').split('\\n');
+            outputLines.forEach(line => {
+                const outputLine = document.createElement('div');
+                outputLine.className = 'terminal-line';
+                outputLine.textContent = line;
+                terminalOutput.appendChild(outputLine);
+            });
+            
+            // Add blank line
+            const blankLine2 = document.createElement('div');
+            blankLine2.className = 'terminal-line';
+            blankLine2.innerHTML = '&nbsp;';
+            terminalOutput.appendChild(blankLine2);
+            
+            // Add final prompt
+            const finalPrompt = document.createElement('div');
+            finalPrompt.className = 'terminal-line';
+            finalPrompt.textContent = 'C:\\Users\\user\\OneDrive\\Desktop>';
+            terminalOutput.appendChild(finalPrompt);
         }
         
-        // Get code and output from URL parameters or use defaults
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code') || `{{ code_content | replace('`', '\\`') | replace('\n', '\\n') | replace('\r', '\\r') }}`;
-        const output = urlParams.get('output') || `{{ output_content | replace('`', '\\`') | replace('\n', '\\n') | replace('\r', '\\r') or 'Hello, World!' }}`;
+        // Get code and output from template variables
+        const code = `{{ code_content | replace('`', '\\`') | replace('\n', '\\n') | replace('\r', '\\r') }}`;
+        const output = `{{ output_content | replace('`', '\\`') | replace('\n', '\\n') | replace('\r', '\\r') }}`;
         
         updateCode(code);
-        updateOutput(output);
+        updateTerminalOutput(output);
     </script>
 </body>
 </html>
