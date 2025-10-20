@@ -197,24 +197,31 @@ class ExecutorService:
         temp_java_file = None
         
         try:
-            # Extract class name from code (simple approach)
-            class_name = "Main"  # Default
+            # Extract class name from code (improved approach)
+            class_name = "Main"  # Default fallback
             for line in code.split('\n'):
-                if 'public class' in line:
+                line = line.strip()
+                if line.startswith('public class') and '{' in line:
+                    # Extract class name from "public class ClassName {"
                     parts = line.split()
                     if len(parts) >= 3:
                         class_name = parts[2].split('{')[0].strip()
-                    break
+                        break
+                elif line.startswith('class') and '{' in line:
+                    # Handle "class ClassName {" without public
+                    parts = line.split()
+                    if len(parts) >= 2:
+                        class_name = parts[1].split('{')[0].strip()
+                        break
             
-            # Create temporary Java file
-            with tempfile.NamedTemporaryFile(
-                mode='w',
-                suffix='.java',
-                delete=False,
-                encoding='utf-8'
-            ) as f:
+            print(f"Detected Java class name: {class_name}")
+            
+            # Create temporary Java file with class name as filename
+            temp_java_file = os.path.join(tempfile.gettempdir(), f"{class_name}.java")
+            with open(temp_java_file, 'w', encoding='utf-8') as f:
                 f.write(code)
-                temp_java_file = f.name
+            
+            print(f"Created temporary Java file: {temp_java_file}")
             
             # Compile Java code
             compile_process = await asyncio.create_subprocess_exec(
@@ -229,7 +236,10 @@ class ExecutorService:
             if compile_process.returncode != 0:
                 # Compilation failed
                 errors = compile_stderr.decode('utf-8') if compile_stderr else ""
+                print(f"Java compilation failed: {errors}")
                 return False, "", f"Compilation error: {errors}", compile_process.returncode
+            
+            print(f"Java compilation successful, running class: {class_name}")
             
             # Run the Java program
             java_dir = os.path.dirname(temp_java_file)
@@ -251,6 +261,12 @@ class ExecutorService:
                 output = stdout_data.decode('utf-8') if stdout_data else ""
                 errors = stderr_data.decode('utf-8') if stderr_data else ""
                 exit_code = run_process.returncode
+                
+                print(f"Java execution completed with exit code: {exit_code}")
+                if errors:
+                    print(f"Java execution errors: {errors}")
+                if output:
+                    print(f"Java execution output: {output}")
                 
                 success = exit_code == 0
                 return success, output, errors, exit_code
