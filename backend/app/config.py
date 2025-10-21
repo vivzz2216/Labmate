@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = "/app/uploads"
     SCREENSHOT_DIR: str = "/app/screenshots"
     REPORT_DIR: str = "/app/reports"
+    REACT_TEMP_DIR: str = "/app/react_temp"
+    HOST_PROJECT_ROOT: str = os.getenv("HOST_PROJECT_ROOT", os.getcwd())
     
     # Docker settings
     DOCKER_IMAGE: str = "python:3.10-slim"
@@ -30,6 +32,17 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o-mini"
     OPENAI_MAX_TOKENS: int = 4000
+    
+    # Web execution settings
+    WEB_EXECUTION_TIMEOUT_HTML: int = 10
+    WEB_EXECUTION_TIMEOUT_REACT: int = 60
+    WEB_EXECUTION_TIMEOUT_NODE: int = 30
+    WHITELISTED_NPM_PACKAGES: list = ["express", "react", "react-dom", "vite"]
+    
+    # React project settings
+    REACT_EXECUTION_TIMEOUT: int = 120  # 2 minutes for npm install + startup
+    REACT_MULTI_ROUTE_CAPTURE: bool = True
+    REACT_DEFAULT_ROUTES: list = ["/", "/about", "/contact"]
     
     class Config:
         env_file = ".env"

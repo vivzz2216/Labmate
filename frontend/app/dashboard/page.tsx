@@ -36,14 +36,20 @@ export default function DashboardPage() {
     setSelectedLanguage(language)
     setShowLanguageModal(false)
     
-    // Skip filename modal for Java since we extract class name from code
-    if (language === 'java') {
+    // Skip filename modal for Java, HTML, React, Node since we extract names from code or use defaults
+    if (['java', 'html', 'react', 'node'].includes(language)) {
       setLoading(true)
       setError(null)
 
       try {
-        // Set a default filename for Java (will be overridden by class name extraction)
-        await apiService.setFilename(upload!.id, 'Main')
+        // Set a default filename (will be overridden by automatic extraction)
+        const defaultFilenames: Record<string, string> = {
+          java: 'Main',
+          html: 'index.html',
+          react: 'App.jsx',
+          node: 'server.js'
+        }
+        await apiService.setFilename(upload!.id, defaultFilenames[language] || 'Main')
         
         // Now proceed with AI analysis
         const analyzeResponse = await apiService.analyzeDocument(upload!.id, language)
@@ -477,6 +483,27 @@ export default function DashboardPage() {
                   className="w-full bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300"
                 >
                   C Programming (CodeBlocks)
+                </button>
+                
+                <button
+                  onClick={() => handleLanguageSelect('html')}
+                  className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300"
+                >
+                  HTML/CSS/JS (VS Code)
+                </button>
+                
+                <button
+                  onClick={() => handleLanguageSelect('react')}
+                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300"
+                >
+                  React (VS Code)
+                </button>
+                
+                <button
+                  onClick={() => handleLanguageSelect('node')}
+                  className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300"
+                >
+                  Node.js/Express (VS Code)
                 </button>
               </div>
             </div>

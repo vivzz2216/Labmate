@@ -57,22 +57,29 @@ async def run_tasks(
             db.refresh(job)
             
             try:
-                # Validate code
-                is_valid, validation_error = validator_service.validate_code(code_snippet)
-                if not is_valid:
-                    job.status = "failed"
-                    job.error_message = f"Code validation failed: {validation_error}"
-                    job.execution_time = 0
-                    db.commit()
-                    continue
-                
                 # Determine language based on theme
                 if request.theme == "codeblocks":
                     language = "c"
                 elif request.theme == "notepad":
                     language = "java"
+                elif request.theme == "html":
+                    language = "html"
+                elif request.theme == "react":
+                    language = "react"
+                elif request.theme == "node":
+                    language = "node"
                 else:
                     language = "python"
+                
+                # Validate code only for Python
+                if language == "python":
+                    is_valid, validation_error = validator_service.validate_code(code_snippet)
+                    if not is_valid:
+                        job.status = "failed"
+                        job.error_message = f"Code validation failed: {validation_error}"
+                        job.execution_time = 0
+                        db.commit()
+                        continue
                 
                 # Execute code
                 success, output, error, execution_time = await executor_service.execute_code(code_snippet, language)

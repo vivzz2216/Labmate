@@ -112,7 +112,7 @@ class AITask(Base):
     id = Column(Integer, primary_key=True, index=True)
     job_id = Column(Integer, ForeignKey("ai_jobs.id"), nullable=False)
     task_id = Column(String, nullable=False)  # Unique identifier for the task
-    task_type = Column(String, nullable=False)  # screenshot_request, answer_request, code_execution
+    task_type = Column(String, nullable=False)  # screenshot_request, answer_request, code_execution, react_project
     question_context = Column(Text, nullable=False)
     suggested_code = Column(Text, nullable=True)
     user_code = Column(Text, nullable=True)  # User-edited code
@@ -128,6 +128,10 @@ class AITask(Base):
     stdout = Column(Text, nullable=True)
     exit_code = Column(Integer, nullable=True)
     caption = Column(Text, nullable=True)
+    # React project fields
+    project_files = Column(JSON, nullable=True)  # Multi-file project structure
+    routes = Column(JSON, nullable=True)  # React routes to capture
+    screenshot_urls = Column(JSON, nullable=True)  # Multiple screenshots for routes
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     

@@ -1,5 +1,6 @@
 import os
 import uuid
+import json
 from typing import List, Dict, Any, Tuple
 from sqlalchemy.orm import Session
 from ..models import AIJob, AITask, Upload, User
@@ -19,7 +20,10 @@ class TaskService:
         mapping = {
             'python': 'idle',
             'java': 'notepad',
-            'c': 'codeblocks'
+            'c': 'codeblocks',
+            'html': 'html',
+            'react': 'react',
+            'node': 'node'
         }
         return mapping.get(language, 'idle')  # Default to idle
     
@@ -35,10 +39,10 @@ class TaskService:
         # Normalize theme based on upload language (force correct theme for non-Python)
         if upload.language:
             lang_theme = self._map_language_to_theme(upload.language)
-            if not theme or theme not in ["idle", "vscode", "notepad", "codeblocks"]:
+            if not theme or theme not in ["idle", "vscode", "notepad", "codeblocks", "html", "react", "node"]:
                 theme = lang_theme
-            # If language is C/Java but theme is still a Python theme, override
-            if upload.language in ["c", "java"] and theme in ["idle", "vscode"]:
+            # If language is non-Python but theme is still a Python theme, override
+            if upload.language in ["c", "java", "html", "react", "node"] and theme in ["idle", "vscode"]:
                 theme = lang_theme
         
         # Create AI job record
@@ -58,13 +62,15 @@ class TaskService:
             ai_task = AITask(
                 job_id=job.id,
                 task_id=task_submission.task_id,
-                task_type="",  # Will be set when we process the task
-                question_context="",  # Will be set when we process the task
+                task_type=task_submission.task_type or "",  # From frontend submission
+                question_context=task_submission.question_context or "",  # From frontend
                 user_code=task_submission.user_code,
                 follow_up_answer=task_submission.follow_up_answer,
                 confidence=80,  # Default confidence (0-100 scale for database)
                 status="pending",
-                suggested_insertion=task_submission.insertion_preference
+                suggested_insertion=task_submission.insertion_preference,
+                project_files=task_submission.project_files,  # For React projects
+                routes=task_submission.routes  # For React projects
             )
             db.add(ai_task)
         
@@ -107,15 +113,14 @@ class TaskService:
         db.commit()
         
         try:
-            # For now, we'll use mock data since we don't have the full context
-            # In a real implementation, you'd store the original task context during analysis
+            # Task type and context are already set from submit_tasks method
+            # No need to override with mock data
             
-            # Mock task context - in real implementation, this would come from analysis
-            task.question_context = "Generate the first 10 Fibonacci numbers"
-            task.task_type = "code_execution"
+            print(f"[Task Service] Processing task {task.id} with type: {task.task_type}")
+            print(f"[Task Service] Question context: {task.question_context}")
             
-            # If no user code provided, generate code using AI
-            if not task.user_code:
+            # If no user code provided, generate code using AI (only for non-React tasks)
+            if not task.user_code and task.task_type != "react_project":
                 if task.task_type in ["screenshot_request", "code_execution"]:
                     code_result = await analysis_service.generate_code_and_answer(
                         task.task_type, task.question_context, 
@@ -132,6 +137,8 @@ class TaskService:
             # Execute code if it's a code execution task
             if task.task_type in ["screenshot_request", "code_execution"] and task.user_code:
                 await self._execute_code_task(task, job, db)
+            elif task.task_type == "react_project":
+                await self._execute_react_project_task(task, job, db)
             elif task.task_type == "answer_request":
                 task.status = "completed"
                 db.commit()
@@ -151,10 +158,16 @@ class TaskService:
             language = "c"
         elif job.theme == "notepad":
             language = "java"
+        elif job.theme == "html":
+            language = "html"
+        elif job.theme == "react":
+            language = "react"
+        elif job.theme == "node":
+            language = "node"
         else:
             language = "python"
 
-        # For Python themes, validate and execute; for C/Java themes, execute directly
+        # For Python themes, validate and execute; for other languages, execute directly
         if is_python_theme:
             # Validate code
             is_valid, error_msg = validator_service.validate_code(task.user_code)
@@ -167,7 +180,7 @@ class TaskService:
             # Execute code
             success, output, logs, exit_code = await executor_service.execute_code(task.user_code, language)
         else:
-            # Non-Python (e.g., C Code::Blocks, Java Notepad): execute directly without Python validation
+            # Non-Python (C, Java, HTML, React, Node): execute directly without Python validation
             success, output, logs, exit_code = await executor_service.execute_code(task.user_code, language)
         
         # Store execution results
@@ -220,6 +233,72 @@ class TaskService:
         task.status = "completed" if success else "failed"
         db.commit()
     
+    async def _execute_react_project_task(self, task: AITask, job: AIJob, db: Session):
+        """Execute React project with multiple files and routes"""
+        
+        print(f"[Task Service] Processing React project task {task.id}")
+        
+        # Get project files and routes
+        project_files = task.project_files or {}
+        routes = task.routes or settings.REACT_DEFAULT_ROUTES
+        
+        if not project_files:
+            task.status = "failed"
+            task.caption = "No project files found"
+            db.commit()
+            return
+        
+        print(f"[Task Service] Project files: {list(project_files.keys())}")
+        print(f"[Task Service] Routes to capture: {routes}")
+        
+        # Execute React project
+        success, screenshots_by_route, logs, exit_code = await executor_service.execute_react_project(
+            project_files, routes
+        )
+        
+        # Store execution results
+        task.stdout = logs
+        task.exit_code = exit_code
+        
+        if success and screenshots_by_route:
+            # Get user information for personalized display
+            upload = db.query(Upload).filter(Upload.id == job.upload_id).first()
+            user = db.query(User).filter(User.id == upload.user_id).first() if upload else None
+            
+            # Extract first name from full name
+            if user and user.name:
+                username = user.name.split()[0]  # Get first name only
+            else:
+                username = "User"
+            
+            # Generate screenshots for all routes
+            screenshot_urls = await screenshot_service.generate_project_screenshots(
+                project_files, screenshots_by_route, job.id, task.id, username
+            )
+            
+            # Store screenshot URLs as JSON
+            task.screenshot_urls = json.dumps(screenshot_urls)
+            
+            # Also set first screenshot as primary
+            if screenshot_urls:
+                task.screenshot_path = screenshot_urls[0]["url"]
+            
+            print(f"[Task Service] Generated {len(screenshot_urls)} screenshots")
+            
+            # Generate caption
+            try:
+                caption = await analysis_service.generate_caption(
+                    task.task_type, f"React SPA with {len(routes)} routes", exit_code, ""
+                )
+                task.caption = caption
+            except:
+                task.caption = f"React SPA project with {len(routes)} routes captured successfully"
+        else:
+            task.caption = "React project execution failed"
+        
+        task.status = "completed" if success else "failed"
+        db.commit()
+    
     async def get_job_status(self, job_id: int, db: Session) -> Dict[str, Any]:
         """Get status of a job and its tasks"""
         
@@ -233,9 +312,14 @@ class TaskService:
         for task in tasks:
             screenshot_url = None
             if task.screenshot_path:
-                # Generate URL for screenshot - extract relative path from /app/screenshots/
-                relative_path = task.screenshot_path.replace(settings.SCREENSHOT_DIR + "/", "")
-                screenshot_url = f"/screenshots/{relative_path}"
+                # Screenshot path is already a URL path (e.g., /screenshots/154/screenshot_xxx.png)
+                # Use it directly if it starts with /screenshots/, otherwise convert from absolute path
+                if task.screenshot_path.startswith("/screenshots/"):
+                    screenshot_url = task.screenshot_path
+                else:
+                    # Legacy format: absolute path like /app/screenshots/154/...
+                    relative_path = task.screenshot_path.replace(settings.SCREENSHOT_DIR + "/", "")
+                    screenshot_url = f"/screenshots/{relative_path}"
             
             task_result = TaskResult(
                 id=task.id,

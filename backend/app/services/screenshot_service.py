@@ -4,7 +4,7 @@ from typing import Tuple
 from playwright.async_api import async_playwright
 from pygments import highlight
 from pygments.lexers import PythonLexer
-from pygments.lexers import JavaLexer, CLexer
+from pygments.lexers import JavaLexer, CLexer, JavascriptLexer, HtmlLexer
 from pygments.formatters import HtmlFormatter
 from jinja2 import Template
 from ..config import settings
@@ -87,7 +87,10 @@ class ScreenshotService:
             lexer_map = {
                 'idle': PythonLexer(),
                 'notepad': JavaLexer(),
-                'codeblocks': CLexer()
+                'codeblocks': CLexer(),
+                'html': HtmlLexer(),
+                'react': JavascriptLexer(),
+                'node': JavascriptLexer()
             }
             
             lexer = lexer_map.get(theme, PythonLexer())
@@ -317,6 +320,119 @@ print("Screenshot test successful!")
                 pass
         
         return success and width > 0 and height > 0
+    
+    async def generate_project_screenshots(
+        self,
+        project_files: dict,
+        screenshots_by_route: dict,
+        job_id: int,
+        task_id: int,
+        username: str = "User"
+    ) -> list:
+        """
+        Generate screenshot for each route in a React project
+        
+        Args:
+            project_files: Dictionary of {filepath: content}
+            screenshots_by_route: Dictionary of {route: html_content}
+            job_id: Job ID for directory structure
+            task_id: Task ID for naming
+            username: Username for display
+        
+        Returns:
+            List of {"route": "/path", "url": "/screenshots/..."}
+        """
+        screenshot_urls = []
+        
+        print(f"[Screenshot Service] Generating combined screenshots for React project")
+        
+        # Map route components to their routes
+        route_component_mapping = {
+            "src/components/Home.js": "/",
+            "src/components/Home.jsx": "/",
+            "src/components/About.js": "/about", 
+            "src/components/About.jsx": "/about",
+            "src/components/Contact.js": "/contact",
+            "src/components/Contact.jsx": "/contact"
+        }
+        
+        # Files that should only show VS Code (no browser output)
+        code_only_files = {
+            "src/App.js",
+            "src/App.jsx", 
+            "src/App.css"
+        }
+        
+        # Generate screenshots for each file
+        for file_path, file_content in project_files.items():
+            try:
+                # Create filename based on the file path
+                filename = file_path.replace("src/", "").replace("/", "_").replace("\\", "_")
+                
+                # Check if this file should only show VS Code (no browser output)
+                if file_path in code_only_files:
+                    # Generate code-only screenshot for App.jsx, App.css, Navbar.jsx, etc.
+                    success, screenshot_path, width, height = await self.generate_screenshot(
+                        code=file_content,
+                        output="",  # No output for code-only files
+                        theme="react",
+                        job_id=job_id,
+                        username=username,
+                        filename=filename
+                    )
+                    print(f"[Screenshot Service] Generated code-only screenshot for {file_path}: {screenshot_path}")
+                # Check if this is a route component that should have combined input+output
+                elif file_path in route_component_mapping:
+                    route = route_component_mapping[file_path]
+                    if route in screenshots_by_route:
+                        # Generate combined input+output screenshot for route components
+                        html_content = screenshots_by_route[route]
+                        success, screenshot_path, width, height = await self.generate_screenshot(
+                            code=file_content,
+                            output=html_content,  # Include browser output
+                            theme="react",
+                            job_id=job_id,
+                            username=username,
+                            filename=filename
+                        )
+                        print(f"[Screenshot Service] Generated combined screenshot for {file_path} + {route}: {screenshot_path}")
+                    else:
+                        # Fallback to code-only if route not found
+                        success, screenshot_path, width, height = await self.generate_screenshot(
+                            code=file_content,
+                            output="",  # No output
+                            theme="react",
+                            job_id=job_id,
+                            username=username,
+                            filename=filename
+                        )
+                        print(f"[Screenshot Service] Generated code-only screenshot for {file_path}: {screenshot_path}")
+                else:
+                    # Generate code-only screenshot for any other files
+                    success, screenshot_path, width, height = await self.generate_screenshot(
+                        code=file_content,
+                        output="",  # No output for other files
+                        theme="react",
+                        job_id=job_id,
+                        username=username,
+                        filename=filename
+                    )
+                    print(f"[Screenshot Service] Generated code-only screenshot for {file_path}: {screenshot_path}")
+                
+                if success:
+                    # Convert absolute path to URL path
+                    url_path = screenshot_path.replace("/app", "")
+                    screenshot_urls.append({
+                        "file": file_path,
+                        "url": url_path
+                    })
+                else:
+                    print(f"[Screenshot Service] Failed to generate screenshot for file {file_path}")
+                    
+            except Exception as e:
+                print(f"[Screenshot Service] Error generating screenshot for file {file_path}: {str(e)}")
+        
+        return screenshot_urls
 
 
 # Global instance

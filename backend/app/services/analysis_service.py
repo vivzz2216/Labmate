@@ -1,5 +1,6 @@
 import json
 import jsonschema
+import re
 from typing import List, Dict, Any, Optional
 import openai
 from ..config import settings
@@ -36,13 +37,15 @@ class AnalysisService:
                         "properties": {
                             "task_id": {"type": "string"},
                             "question_context": {"type": "string"},
-                            "task_type": {"type": "string", "enum": ["screenshot_request", "answer_request", "code_execution"]},
-                            "suggested_code": {"type": ["string", "null"]},
+                            "task_type": {"type": "string", "enum": ["screenshot_request", "answer_request", "code_execution", "react_project"]},
+                            "suggested_code": {"type": ["string", "object", "null"]},
                             "extracted_code": {"type": ["string", "null"]},
                             "confidence": {"type": "number", "minimum": 0, "maximum": 1},
                             "suggested_insertion": {"type": "string", "enum": ["below_question", "bottom_of_page"]},
                             "brief_description": {"type": "string"},
-                            "follow_up": {"type": ["string", "null"]}
+                            "follow_up": {"type": ["string", "null"]},
+                            "project_files": {"type": ["object", "null"]},
+                            "routes": {"type": ["array", "null"]}
                         },
                         "required": ["task_id", "question_context", "task_type", "confidence", "suggested_insertion", "brief_description"]
                     }
@@ -60,6 +63,11 @@ class AnalysisService:
             return []
             
         try:
+            # Add file existence validation
+            import os
+            if not os.path.exists(file_path):
+                raise Exception(f"File not found at path: {file_path}")
+            
             # Parse the document to extract text and structure
             parsed_content = await parser_service.parse_file(file_path, file_type)
             
@@ -90,6 +98,58 @@ class AnalysisService:
         
         return "\n".join(text_parts)
     
+    def _detect_react_project(self, document_text: str) -> dict:
+        """Detect if document contains React SPA project structure"""
+        patterns = {
+            "has_router": r"react-router|BrowserRouter|Routes|Route",
+            "has_components": r"components/.*?\.js|Navbar|Home|About|Contact",
+            "has_package_json": r"package\.json|npm install",
+            "has_app_js": r"App\.js|function App"
+        }
+        
+        detected = {key: bool(re.search(pattern, document_text, re.IGNORECASE)) 
+                    for key, pattern in patterns.items()}
+        
+        is_react_project = sum(detected.values()) >= 2
+        return {"is_project": is_react_project, "features": detected}
+    
+    def _extract_project_files(self, code_text: str) -> dict:
+        """Extract file paths and contents from AI response"""
+        files = {}
+        
+        # Handle None or empty input
+        if not code_text or not isinstance(code_text, str):
+            return files
+        
+        # Pattern to match file headers and their content
+        # Matches: src/App.js or App.js followed by code block
+        pattern = r'(?:^|\n)(?:src/)?([A-Za-z]+\.(?:js|jsx|css))[:\s]*\n(.*?)(?=\n(?:src/)?[A-Za-z]+\.(?:js|jsx|css)|$)'
+        matches = re.findall(pattern, code_text, re.DOTALL | re.MULTILINE)
+        
+        for filepath, content in matches:
+            # Clean up content
+            content = content.strip()
+            # Remove code fence markers if present
+            content = re.sub(r'^```(?:javascript|jsx|css)?\n', '', content)
+            content = re.sub(r'\n```$', '', content)
+            files[f"src/{filepath}"] = content.strip()
+        
+        # If no files found, treat entire code as App.jsx
+        return files if files else {"src/App.jsx": code_text}
+    
+    def _extract_routes(self, code_text: str) -> list:
+        """Extract React Router routes from code"""
+        routes = ["/"]  # Always include home
+        
+        # Handle None or empty input
+        if not code_text or not isinstance(code_text, str):
+            return routes
+            
+        route_pattern = r'<Route\s+path=["\']([^"\']+)["\']'
+        found_routes = re.findall(route_pattern, code_text)
+        routes.extend([r for r in found_routes if r != "/"])
+        return list(set(routes))  # Remove duplicates
+    
     async def _generate_task_candidates(self, document_text: str) -> List[Dict[str, Any]]:
         """Generate task candidates using OpenAI Chat API"""
         
@@ -102,6 +162,7 @@ Your task is to analyze the provided assignment document and identify opportunit
 1. **screenshot_request**: Code that should be executed and screenshotted to show output
 2. **answer_request**: Questions that need AI-generated explanations or answers
 3. **code_execution**: Code blocks that need to be run to demonstrate functionality
+4. **react_project**: Complete React SPA projects with multiple files (App.js, components, routing)
 
 For each identified task, provide:
 - A unique task_id (e.g., "task_1", "task_2")
@@ -112,7 +173,65 @@ For each identified task, provide:
 - Brief description of what this task accomplishes
 - Optional follow-up question if you need clarification from the user
 
-IMPORTANT: Only output valid JSON matching the exact schema. Do not include any text before or after the JSON."""
+**CRITICAL: For React Projects**:
+When you detect a React SPA project (keywords: React Router, SPA, components, JSX, BrowserRouter):
+1. Set task_type to "react_project"
+2. In the "suggested_code" field, create a nested structure with "project_files" and "routes":
+   ```json
+   "suggested_code": {
+       "project_files": {
+           "src/App.js": "import React from 'react';\\nimport { BrowserRouter as Router, Routes, Route } from 'react-router-dom';\\n...",
+           "src/components/Navbar.js": "import React from 'react';\\nimport { Link } from 'react-router-dom';\\n...",
+           "src/components/Home.js": "import React from 'react';\\n\\nfunction Home() {\\n  return <div><h1>Home</h1></div>;\\n}\\nexport default Home;",
+           "src/App.css": "body {\\n  font-family: Arial, sans-serif;\\n}"
+       },
+       "routes": ["/", "/about", "/contact"]
+   }
+   ```
+
+3. **Generate COMPLETE, WORKING React code**:
+   - Use modern React with functional components
+   - Use react-router-dom v6 syntax (Routes, Route, Link)
+   - Include proper imports and exports
+   - Each component file should be complete and working
+   - Include ALL necessary files: App.js, all component files, CSS files
+   - Ensure proper JSX syntax
+   - NO Python code, NO placeholders, ONLY React/JavaScript
+
+4. **Extract files from the document**:
+   - If the document shows code examples, use those
+   - If the document only describes the project, generate the complete working code
+   - Create all necessary component files (Navbar, Home, About, Contact, etc.)
+   - Include proper styling in CSS files
+
+**EXAMPLE OUTPUT for React Project**:
+```json
+{
+  "candidates": [
+    {
+      "task_id": "task_1",
+      "question_context": "Create a single page application using React Router",
+      "task_type": "react_project",
+      "suggested_code": {
+        "project_files": {
+          "src/App.js": "COMPLETE REACT CODE HERE",
+          "src/components/Navbar.js": "COMPLETE NAVBAR CODE HERE"
+        },
+        "routes": ["/", "/about"]
+      },
+      "confidence": 0.95,
+      "brief_description": "Complete React SPA with routing",
+      "suggested_insertion": "below_question"
+    }
+  ]
+}
+```
+
+IMPORTANT: 
+- Only output valid JSON matching the exact schema
+- For React projects, ALWAYS use JavaScript/React code, NEVER Python
+- Generate COMPLETE working code, not snippets
+- Do not include any text before or after the JSON"""
 
         user_prompt = f"""Analyze this programming assignment and identify tasks:
 
@@ -167,6 +286,12 @@ Return a JSON object with a "candidates" array containing task suggestions. Each
                         if "suggested_insertion" not in candidate:
                             candidate["suggested_insertion"] = "below_question"
                         
+                        # Map field names if OpenAI uses different names
+                        if "context" in candidate and "question_context" not in candidate:
+                            candidate["question_context"] = candidate["context"]
+                        if "description" in candidate and "brief_description" not in candidate:
+                            candidate["brief_description"] = candidate["description"]
+                        
                         # Ensure all required fields exist
                         if "confidence" not in candidate:
                             candidate["confidence"] = 0.8
@@ -176,6 +301,45 @@ Return a JSON object with a "candidates" array containing task suggestions. Each
                             candidate["suggested_code"] = None
                         if "follow_up" not in candidate:
                             candidate["follow_up"] = None
+                        
+                        # Handle react_project type: extract files and routes
+                        if candidate.get("task_type") == "react_project":
+                            suggested_code = candidate.get("suggested_code")
+                            
+                            # Check if suggested_code has nested project_files and routes structure
+                            if isinstance(suggested_code, dict):
+                                # Check if it's a nested structure with project_files/routes keys
+                                if "project_files" in suggested_code or "routes" in suggested_code:
+                                    # Extract from nested structure
+                                    candidate["project_files"] = suggested_code.get("project_files", {})
+                                    candidate["routes"] = suggested_code.get("routes", [])
+                                    # Set suggested_code to the project_files for compatibility
+                                    candidate["suggested_code"] = candidate["project_files"]
+                                else:
+                                    # It's a direct project files dict
+                                    candidate["project_files"] = suggested_code
+                                    # Extract routes from the combined code (ensure all values are strings)
+                                    combined_code = "\n".join([
+                                        str(value) for value in suggested_code.values() 
+                                        if isinstance(value, str)
+                                    ])
+                                    candidate["routes"] = self._extract_routes(combined_code)
+                            elif isinstance(suggested_code, str):
+                                # Extract files from string suggested_code
+                                candidate["project_files"] = self._extract_project_files(suggested_code)
+                                candidate["routes"] = self._extract_routes(suggested_code)
+                            
+                            # Set defaults if still not present
+                            if not candidate.get("project_files"):
+                                candidate["project_files"] = None
+                            if not candidate.get("routes"):
+                                candidate["routes"] = settings.REACT_DEFAULT_ROUTES
+                        else:
+                            # For non-project types, set to None
+                            if "project_files" not in candidate:
+                                candidate["project_files"] = None
+                            if "routes" not in candidate:
+                                candidate["routes"] = None
                 
                 # Now validate
                 jsonschema.validate(parsed_response, self.candidates_schema)

@@ -34,6 +34,11 @@ async def analyze_document(
         # Convert to response format
         candidates = []
         for candidate_data in candidates_data:
+            print(f"[DEBUG] Processing candidate: task_id={candidate_data.get('task_id')}, task_type={candidate_data.get('task_type')}")
+            print(f"[DEBUG] suggested_code type: {type(candidate_data.get('suggested_code'))}")
+            print(f"[DEBUG] project_files: {candidate_data.get('project_files') is not None}")
+            print(f"[DEBUG] routes: {candidate_data.get('routes')}")
+            
             candidate = AITaskCandidate(
                 task_id=candidate_data["task_id"],
                 question_context=candidate_data["question_context"],
@@ -43,11 +48,17 @@ async def analyze_document(
                 confidence=candidate_data["confidence"],
                 suggested_insertion=candidate_data["suggested_insertion"],
                 brief_description=candidate_data["brief_description"],
-                follow_up=candidate_data.get("follow_up")
+                follow_up=candidate_data.get("follow_up"),
+                project_files=candidate_data.get("project_files"),
+                routes=candidate_data.get("routes")
             )
             candidates.append(candidate)
         
         return AnalyzeResponse(candidates=candidates)
         
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"ERROR in analyze endpoint:")
+        print(error_details)
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")

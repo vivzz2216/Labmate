@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict, Union
 from datetime import datetime
 
 
@@ -32,7 +32,7 @@ class ParseResponse(BaseModel):
 class RunRequest(BaseModel):
     upload_id: int
     task_ids: List[int]
-    theme: str = Field(default="idle", pattern="^(idle|vscode|notepad|codeblocks)$")
+    theme: str = Field(default="idle", pattern="^(idle|vscode|notepad|codeblocks|html|react|node)$")
 
 
 class JobStatus(BaseModel):
@@ -82,13 +82,15 @@ class ScreenshotInfo(BaseModel):
 class AITaskCandidate(BaseModel):
     task_id: str
     question_context: str
-    task_type: str  # screenshot_request, answer_request, code_execution
-    suggested_code: Optional[str] = None
+    task_type: str  # screenshot_request, answer_request, code_execution, react_project
+    suggested_code: Optional[Union[str, Dict[str, str]]] = None  # String for normal tasks, Dict for React projects
     extracted_code: Optional[str] = None
     confidence: float  # 0-1
     suggested_insertion: str = "below_question"  # below_question, bottom_of_page
     brief_description: str
     follow_up: Optional[str] = None
+    project_files: Optional[Dict[str, str]] = None  # For React projects
+    routes: Optional[List[str]] = None  # For React projects
 
 
 class AnalyzeRequest(BaseModel):
@@ -106,12 +108,16 @@ class TaskSubmission(BaseModel):
     user_code: Optional[str] = None
     follow_up_answer: Optional[str] = None
     insertion_preference: str = "below_question"
+    task_type: Optional[str] = None  # For react_project
+    question_context: Optional[str] = None
+    project_files: Optional[Dict[str, str]] = None  # For React projects
+    routes: Optional[List[str]] = None  # For React projects
 
 
 class TasksSubmitRequest(BaseModel):
     file_id: int
     tasks: List[TaskSubmission]
-    theme: str = Field(default="idle", pattern="^(idle|vscode|notepad|codeblocks)$")
+    theme: str = Field(default="idle", pattern="^(idle|vscode|notepad|codeblocks|html|react|node)$")
     insertion_preference: str = Field(default="below_question")
 
 

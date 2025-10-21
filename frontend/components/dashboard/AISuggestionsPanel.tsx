@@ -41,6 +41,8 @@ export default function AISuggestionsPanel({ candidates, onSubmit, onError, init
         return <MessageSquare className="w-4 h-4" />
       case 'code_execution':
         return <Code className="w-4 h-4" />
+      case 'react_project':
+        return <Code className="w-4 h-4 text-cyan-400" />
       default:
         return <Brain className="w-4 h-4" />
     }
@@ -54,6 +56,8 @@ export default function AISuggestionsPanel({ candidates, onSubmit, onError, init
         return 'AI Answer'
       case 'code_execution':
         return 'Code Execution'
+      case 'react_project':
+        return 'React SPA Project'
       default:
         return 'AI Task'
     }
@@ -72,12 +76,21 @@ export default function AISuggestionsPanel({ candidates, onSubmit, onError, init
       // Initialize task submission
       const candidate = candidates.find(c => c.task_id === taskId)
       if (candidate) {
+        // For react_project, don't set user_code (use project_files instead)
+        const userCode = candidate.task_type === 'react_project' 
+          ? undefined 
+          : (typeof candidate.suggested_code === 'string' ? candidate.suggested_code : candidate.extracted_code)
+        
         taskSubmissions.set(taskId, {
           task_id: taskId,
           selected: true,
-          user_code: candidate.suggested_code || candidate.extracted_code,
+          user_code: userCode,
           follow_up_answer: followUpAnswers.get(taskId),
-          insertion_preference: candidate.suggested_insertion
+          insertion_preference: candidate.suggested_insertion,
+          task_type: candidate.task_type,
+          question_context: candidate.question_context,
+          project_files: candidate.project_files,
+          routes: candidate.routes
         })
       }
     } else {
@@ -144,6 +157,9 @@ export default function AISuggestionsPanel({ candidates, onSubmit, onError, init
                 <option value="idle">Python IDLE</option>
                 <option value="notepad">Java Notepad</option>
                 <option value="codeblocks">C Code::Blocks</option>
+                <option value="html">HTML/CSS/JS (VS Code)</option>
+                <option value="react">React (VS Code)</option>
+                <option value="node">Node.js/Express (VS Code)</option>
               </select>
             </div>
             <div>
@@ -204,8 +220,54 @@ export default function AISuggestionsPanel({ candidates, onSubmit, onError, init
                       {candidate.brief_description}
                     </p>
 
+                    {/* React Project Files */}
+                    {candidate.task_type === 'react_project' && candidate.project_files && (
+                      <div className="mb-3">
+                        <label className="text-sm font-medium text-white mb-2 block">
+                          Project Files ({Object.keys(candidate.project_files).length} files)
+                        </label>
+                        <div className="bg-gray-800/50 p-3 rounded border border-white/10">
+                          <ul className="space-y-1">
+                            {Object.keys(candidate.project_files).map(filepath => (
+                              <li key={filepath} className="text-sm text-white/80 flex items-center gap-2">
+                                <Code className="w-3 h-3 text-cyan-400" />
+                                {filepath}
+                              </li>
+                            ))}
+                          </ul>
+                          {candidate.routes && candidate.routes.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-white/10">
+                              <p className="text-xs text-white/60 mb-1">Routes to capture:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {candidate.routes.map(route => (
+                                  <span key={route} className="px-2 py-1 bg-cyan-500/20 text-cyan-400 text-xs rounded">
+                                    {route}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          <details className="mt-3">
+                            <summary className="text-xs text-white/60 cursor-pointer hover:text-white/80">
+                              View all file contents
+                            </summary>
+                            <div className="mt-2 space-y-3">
+                              {Object.entries(candidate.project_files).map(([path, content]) => (
+                                <div key={path} className="border-t border-white/10 pt-2">
+                                  <p className="text-xs font-medium text-white/80 mb-1">{path}</p>
+                                  <pre className="bg-gray-900 p-2 rounded text-xs font-mono overflow-x-auto border border-white/10 text-white/70 max-h-[200px] overflow-y-auto">
+                                    {content}
+                                  </pre>
+                                </div>
+                              ))}
+                            </div>
+                          </details>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Code Preview/Edit */}
-                    {(candidate.suggested_code || candidate.extracted_code) && (
+                    {candidate.task_type !== 'react_project' && (candidate.suggested_code || candidate.extracted_code) && (
                       <div className="mb-3">
                         <div className="flex items-center justify-between mb-2">
                           <label className="text-sm font-medium text-white">Code</label>
