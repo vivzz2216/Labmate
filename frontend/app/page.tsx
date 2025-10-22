@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { useAuth } from '../contexts/BasicAuthContext'
+import { useAuth } from '@/contexts/BasicAuthContext'
 import { useRouter } from 'next/navigation'
-import LoginModal from '../components/auth/LoginModal'
+import LoginModal from '@/components/auth/LoginModal'
 import { 
   Menu, 
   X,

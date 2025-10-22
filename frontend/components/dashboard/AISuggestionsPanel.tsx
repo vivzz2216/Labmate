@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Button } from '../ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 // Using basic HTML elements since UI components are not available
 import { 
   Brain, 
@@ -16,7 +16,7 @@ import {
   Play,
   Settings
 } from 'lucide-react'
-import { type AITaskCandidate, type TaskSubmission } from '../../lib/api'
+import { type AITaskCandidate, type TaskSubmission } from '@/lib/api'
 
 interface AISuggestionsPanelProps {
   candidates: AITaskCandidate[]

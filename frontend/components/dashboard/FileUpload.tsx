@@ -3,13 +3,13 @@
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { motion } from 'framer-motion'
-import { Button } from '../ui/button'
-import { Progress } from '../ui/progress'
-import { Card, CardContent } from '../ui/card'
+import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
+import { Card, CardContent } from '@/components/ui/card'
 import { Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react'
-import { apiService, type UploadResponse } from '../../lib/api'
-import { useAuth } from '../../contexts/BasicAuthContext'
-import { formatFileSize } from '../../lib/utils'
+import { apiService, type UploadResponse } from '@/lib/api'
+import { useAuth } from '@/contexts/BasicAuthContext'
+import { formatFileSize } from '@/lib/utils'
 
 interface FileUploadProps {
   onUploadComplete: (upload: UploadResponse) => void
