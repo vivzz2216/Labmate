@@ -8,7 +8,7 @@ import FileUpload from '../../components/dashboard/FileUpload'
 import TaskList from '../../components/dashboard/TaskList'
 import AISuggestionsPanel from '../../components/dashboard/AISuggestionsPanel'
 import { ArrowLeft, AlertCircle, CheckCircle, FileText } from 'lucide-react'
-import { apiService, type UploadResponse, type Task, type JobStatus, type AITaskCandidate, type TaskSubmission, type TaskResult } from '../../lib/api'
+import { apiService, type UploadResponse, type Task, type JobStatus, type AITaskCandidate, type TaskSubmission, type TaskResult } from '../lib/api'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 

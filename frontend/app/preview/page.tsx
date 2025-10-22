@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
 import PreviewGrid from '../../components/preview/PreviewGrid'
 import { ArrowLeft, CheckCircle, AlertCircle, FileText } from 'lucide-react'
-import { apiService, type JobStatus, type ComposeResponse, type TaskResult } from '../../lib/api'
+import { apiService, type JobStatus, type ComposeResponse, type TaskResult } from '../lib/api'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
