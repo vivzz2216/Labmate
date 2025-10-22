@@ -11,8 +11,11 @@ COPY frontend/package*.json ./frontend/
 WORKDIR /app/frontend
 RUN npm ci
 
-# Copy frontend source code
+# Copy frontend source code (including lib directory)
 COPY frontend/ ./
+
+# Debug: List files to verify lib directory is copied
+RUN ls -la && ls -la lib/
 
 # Build frontend
 RUN npm run build
