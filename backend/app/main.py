@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import os
 from .config import settings
 from .database import engine, Base
@@ -29,6 +30,27 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Serve static files from frontend build
+frontend_path = "/app/frontend"
+if os.path.exists(frontend_path):
+    app.mount("/static", StaticFiles(directory=f"{frontend_path}/.next/static"), name="static")
+    app.mount("/_next", StaticFiles(directory=f"{frontend_path}/.next"), name="next")
+    app.mount("/public", StaticFiles(directory=f"{frontend_path}/public"), name="public")
+
+# Serve frontend for all non-API routes
+@app.get("/{path:path}")
+async def serve_frontend(path: str):
+    # Don't serve frontend for API routes
+    if path.startswith("api/") or path.startswith("health") or path.startswith("docs"):
+        return {"message": "Not found"}
+    
+    # Serve frontend index.html for all other routes
+    frontend_index = "/app/frontend/.next/server/pages/index.html"
+    if os.path.exists(frontend_index):
+        return FileResponse(frontend_index)
+    else:
+        return {"message": "Frontend not built. Please build the frontend first."}
 
 # Health check endpoint
 @app.get("/health")
