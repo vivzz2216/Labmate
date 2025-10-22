@@ -10,8 +10,11 @@ COPY frontend/package*.json ./
 # Install frontend dependencies
 RUN npm ci
 
-# Copy frontend source code
+# Copy frontend source code (including lib directory)
 COPY frontend/ ./
+
+# Verify files are copied correctly
+RUN ls -la && ls -la lib/
 
 # Build frontend
 RUN npm run build
