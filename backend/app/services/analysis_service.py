@@ -159,10 +159,12 @@ class AnalysisService:
         system_prompt = """You are an expert computer science teaching assistant analyzing programming assignments. 
 
 Your task is to analyze the provided assignment document and identify opportunities for:
-1. **screenshot_request**: Code that should be executed and screenshotted to show output
-2. **answer_request**: Questions that need AI-generated explanations or answers
-3. **code_execution**: Code blocks that need to be run to demonstrate functionality
-4. **react_project**: Complete React SPA projects with multiple files (App.js, components, routing)
+1. **answer_request**: Questions that need AI-generated explanations or answers
+2. **react_project**: ANY React/JSX code (MUST use this for ALL React code, even "Hello World")
+3. **screenshot_request**: Non-React code that should be executed and screenshotted
+4. **code_execution**: Non-React code blocks (Python, Java, C, etc.)
+
+**CRITICAL RULE**: If you see ANY of these keywords in code: React, ReactDOM, JSX, import from 'react', useState, useEffect, function component returning JSX (<div>, <h1>, etc.), YOU MUST classify it as "react_project" type. NEVER use "code_execution" or "screenshot_request" for React code.
 
 For each identified task, provide:
 - A unique task_id (e.g., "task_1", "task_2")
@@ -173,10 +175,11 @@ For each identified task, provide:
 - Brief description of what this task accomplishes
 - Optional follow-up question if you need clarification from the user
 
-**CRITICAL: For React Projects**:
-When you detect a React SPA project (keywords: React Router, SPA, components, JSX, BrowserRouter):
-1. Set task_type to "react_project"
-2. In the "suggested_code" field, create a nested structure with "project_files" and "routes":
+**CRITICAL: For React Projects (THIS IS MANDATORY)**:
+If you see ANY React code whatsoever (even a single line like "import React from 'react'" or "ReactDOM.render"), YOU MUST:
+1. Set task_type to "react_project" (NOT "code_execution", NOT "screenshot_request")
+2. This applies to ALL React code: simple "Hello World", single components, full SPAs, everything
+3. In the "suggested_code" field, create a nested structure with "project_files" and "routes":
    ```json
    "suggested_code": {
        "project_files": {
@@ -189,7 +192,7 @@ When you detect a React SPA project (keywords: React Router, SPA, components, JS
    }
    ```
 
-3. **Generate COMPLETE, WORKING React code**:
+4. **Generate COMPLETE, WORKING React code**:
    - Use modern React with functional components
    - Use react-router-dom v6 syntax (Routes, Route, Link)
    - Include proper imports and exports
@@ -198,11 +201,28 @@ When you detect a React SPA project (keywords: React Router, SPA, components, JS
    - Ensure proper JSX syntax
    - NO Python code, NO placeholders, ONLY React/JavaScript
 
-4. **Extract files from the document**:
+5. **Extract files from the document**:
    - If the document shows code examples, use those
    - If the document only describes the project, generate the complete working code
    - Create all necessary component files (Navbar, Home, About, Contact, etc.)
    - Include proper styling in CSS files
+
+6. **For SIMPLE React code (like "Hello World")**:
+   - Even if the user only provides a single component, structure it as a full project
+   - Create a complete src/ folder structure with:
+     * src/App.js (the user's component or a wrapper)
+     * src/index.js (entry point with ReactDOM.render)
+     * src/index.css (basic styling)
+   - Set routes to ["/"] for single-page apps
+   - Example for "Hello World":
+     ```json
+     "project_files": {
+       "src/App.js": "import React from 'react';\\n\\nfunction App() {\\n  return <div><h1>Hello, World!</h1></div>;\\n}\\n\\nexport default App;",
+       "src/index.js": "import React from 'react';\\nimport ReactDOM from 'react-dom';\\nimport App from './App';\\n\\nReactDOM.render(<App />, document.getElementById('root'));",
+       "src/index.css": "body { font-family: Arial, sans-serif; }"
+     },
+     "routes": ["/"]
+     ```
 
 **EXAMPLE OUTPUT for React Project**:
 ```json

@@ -526,44 +526,44 @@
                         <span>▼</span>
                         <span style="margin-left: 4px;">src</span>
                     </div>
-                    <div class="file" style="padding-left: 44px;">
-                        <span style="color: #61dafb; font-weight: bold;">⚛</span>
-                        <span style="margin-left: 4px;">App.js</span>
-                    </div>
-                    <div class="file" style="padding-left: 44px;">
-                        <span style="color: #ff6b6b;">🎨</span>
-                        <span style="margin-left: 4px;">App.css</span>
-                    </div>
-                    <div class="file" style="padding-left: 44px;">
-                        <span style="color: #61dafb; font-weight: bold;">⚛</span>
-                        <span style="margin-left: 4px;">index.js</span>
-                    </div>
-                    <div class="file" style="padding-left: 44px;">
-                        <span style="color: #ff6b6b;">🎨</span>
-                        <span style="margin-left: 4px;">index.css</span>
-                    </div>
+                    
+                    {% for file_path, file_content in project_files.items() %}
+                        {% if file_path.startswith('src/') and not file_path.startswith('src/components/') %}
+                            <div class="file" style="padding-left: 44px;">
+                                {% if file_path.endswith('.js') or file_path.endswith('.jsx') %}
+                                    <span style="color: #61dafb; font-weight: bold;">⚛</span>
+                                {% elif file_path.endswith('.css') %}
+                                    <span style="color: #ff6b6b;">🎨</span>
+                                {% else %}
+                                    <span style="color: #4ecdc4;">📄</span>
+                                {% endif %}
+                                <span style="margin-left: 4px;">{{ file_path.split('/')[-1] }}</span>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
                     
                     <!-- components -->
+                    {% set has_components = false %}
+                    {% for file_path in project_files.keys() %}
+                        {% if file_path.startswith('src/components/') %}
+                            {% set has_components = true %}
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if has_components %}
                     <div class="folder expanded" style="padding-left: 44px;">
                         <span>▼</span>
                         <span style="margin-left: 4px;">components</span>
                     </div>
-                    <div class="file" style="padding-left: 68px;">
-                        <span style="color: #61dafb; font-weight: bold;">⚛</span>
-                        <span style="margin-left: 4px;">Navbar.js</span>
-                    </div>
-                    <div class="file" style="padding-left: 68px;">
-                        <span style="color: #61dafb; font-weight: bold;">⚛</span>
-                        <span style="margin-left: 4px;">Home.js</span>
-                    </div>
-                    <div class="file" style="padding-left: 68px;">
-                        <span style="color: #61dafb; font-weight: bold;">⚛</span>
-                        <span style="margin-left: 4px;">About.js</span>
-                    </div>
-                    <div class="file" style="padding-left: 68px;">
-                        <span style="color: #61dafb; font-weight: bold;">⚛</span>
-                        <span style="margin-left: 4px;">Contact.js</span>
-                    </div>
+                    {% for file_path, file_content in project_files.items() %}
+                        {% if file_path.startswith('src/components/') %}
+                            <div class="file" style="padding-left: 68px;">
+                                <span style="color: #61dafb; font-weight: bold;">⚛</span>
+                                <span style="margin-left: 4px;">{{ file_path.split('/')[-1] }}</span>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                    {% endif %}
                     
                     <!-- Root files -->
                     <div class="file" style="padding-left: 20px;">

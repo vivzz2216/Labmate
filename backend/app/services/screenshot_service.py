@@ -23,7 +23,8 @@ class ScreenshotService:
         theme: str = "idle",
         job_id: int = None,
         username: str = "User",
-        filename: str = "new.py"
+        filename: str = "new.py",
+        project_files: dict = None
     ) -> Tuple[bool, str, int, int]:
         """
         Generate screenshot of code and output
@@ -57,7 +58,7 @@ class ScreenshotService:
             
             # Load and render template
             html_content = await self._render_template(
-                highlighted_code, output, theme, username, filename
+                highlighted_code, output, theme, username, filename, project_files
             )
             
             # Take screenshot
@@ -170,7 +171,8 @@ class ScreenshotService:
         output: str, 
         theme: str,
         username: str = "User",
-        filename: str = "new.py"
+        filename: str = "new.py",
+        project_files: dict = None
     ) -> str:
         """Render HTML template with code and output"""
         
@@ -196,7 +198,8 @@ class ScreenshotService:
             code_content=highlighted_code,
             output_content=clean_output,
             username=username,
-            filename=filename
+            filename=filename,
+            project_files=project_files or {}
         )
         
         return html_content
@@ -358,9 +361,17 @@ print("Screenshot test successful!")
         
         # Files that should only show VS Code (no browser output)
         code_only_files = {
-            "src/App.js",
-            "src/App.jsx", 
             "src/App.css"
+        }
+        
+        # Files that should show browser output (entry points and main components)
+        browser_output_files = {
+            "src/App.js",
+            "src/App.jsx",
+            "src/index.js",
+            "src/index.jsx",
+            "src/main.js",
+            "src/main.jsx"
         }
         
         # Generate screenshots for each file
@@ -369,18 +380,52 @@ print("Screenshot test successful!")
                 # Create filename based on the file path
                 filename = file_path.replace("src/", "").replace("/", "_").replace("\\", "_")
                 
+                print(f"[Screenshot Service] Processing file: {file_path}")
+                print(f"[Screenshot Service] In code_only_files: {file_path in code_only_files}")
+                print(f"[Screenshot Service] In browser_output_files: {file_path in browser_output_files}")
+                print(f"[Screenshot Service] In route_component_mapping: {file_path in route_component_mapping}")
+                
                 # Check if this file should only show VS Code (no browser output)
                 if file_path in code_only_files:
-                    # Generate code-only screenshot for App.jsx, App.css, Navbar.jsx, etc.
+                    # Generate code-only screenshot for CSS files, etc.
                     success, screenshot_path, width, height = await self.generate_screenshot(
                         code=file_content,
                         output="",  # No output for code-only files
                         theme="react",
                         job_id=job_id,
                         username=username,
-                        filename=filename
+                        filename=filename,
+                        project_files=project_files
                     )
                     print(f"[Screenshot Service] Generated code-only screenshot for {file_path}: {screenshot_path}")
+                # Check if this is a main component/entry point that should show browser output
+                elif file_path in browser_output_files:
+                    # For main components, use the first route's output (usually "/")
+                    main_route = "/" if "/" in screenshots_by_route else list(screenshots_by_route.keys())[0] if screenshots_by_route else ""
+                    if main_route and main_route in screenshots_by_route:
+                        html_content = screenshots_by_route[main_route]
+                        success, screenshot_path, width, height = await self.generate_screenshot(
+                            code=file_content,
+                            output=html_content,  # Include browser output
+                            theme="react",
+                            job_id=job_id,
+                            username=username,
+                            filename=filename,
+                            project_files=project_files
+                        )
+                        print(f"[Screenshot Service] Generated combined screenshot for {file_path} + {main_route}: {screenshot_path}")
+                    else:
+                        # Fallback to code-only if no route output available
+                        success, screenshot_path, width, height = await self.generate_screenshot(
+                            code=file_content,
+                            output="",  # No output
+                            theme="react",
+                            job_id=job_id,
+                            username=username,
+                            filename=filename,
+                            project_files=project_files
+                        )
+                        print(f"[Screenshot Service] Generated code-only screenshot for {file_path}: {screenshot_path}")
                 # Check if this is a route component that should have combined input+output
                 elif file_path in route_component_mapping:
                     route = route_component_mapping[file_path]
@@ -393,7 +438,8 @@ print("Screenshot test successful!")
                             theme="react",
                             job_id=job_id,
                             username=username,
-                            filename=filename
+                            filename=filename,
+                            project_files=project_files
                         )
                         print(f"[Screenshot Service] Generated combined screenshot for {file_path} + {route}: {screenshot_path}")
                     else:
@@ -404,7 +450,8 @@ print("Screenshot test successful!")
                             theme="react",
                             job_id=job_id,
                             username=username,
-                            filename=filename
+                            filename=filename,
+                            project_files=project_files
                         )
                         print(f"[Screenshot Service] Generated code-only screenshot for {file_path}: {screenshot_path}")
                 else:
@@ -415,7 +462,8 @@ print("Screenshot test successful!")
                         theme="react",
                         job_id=job_id,
                         username=username,
-                        filename=filename
+                        filename=filename,
+                        project_files=project_files
                     )
                     print(f"[Screenshot Service] Generated code-only screenshot for {file_path}: {screenshot_path}")
                 

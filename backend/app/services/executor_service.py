@@ -466,181 +466,61 @@ class ExecutorService:
                     pass
     
     async def _execute_react_code(self, code: str) -> Tuple[bool, str, str, int]:
-        """Execute React code using Vite dev server"""
-        temp_dir = None
-        container = None
-        container_name = None
+        """Execute React code using Vite dev server - wrapper around execute_react_project"""
         
+        # Check if this is simple code (not a full React project)
+        # Simple code doesn't contain React-specific patterns
+        is_simple_code = not (
+            'import React' in code or 
+            'from "react"' in code or 
+            'from \'react\'' in code or
+            '<' in code or 
+            'export default' in code or
+            'ReactDOM' in code or
+            'BrowserRouter' in code or
+            'react-router' in code or
+            'useState' in code or
+            'useEffect' in code or
+            'className=' in code or
+            'jsx' in code.lower()
+        )
+        
+        if is_simple_code:
+            # For simple code, just execute it as regular JavaScript
+            print(f"[React Code] Detected simple code, executing as JavaScript")
+            return await self._execute_node_code(code)
+        
+        # For full React code, use the properly working execute_react_project method
+        print(f"[React Code] Detected React code, delegating to execute_react_project")
+        
+        # Create a simple project structure with the user's code as App.jsx
+        project_files = {
+            "src/App.jsx": code,
+            "src/App.css": ""  # Empty CSS file
+        }
+        
+        # Use the execute_react_project method which handles all the Docker networking properly
         try:
-            # Create temporary project directory
-            temp_dir = tempfile.mkdtemp(prefix="react_")
-            container_name = f"react_{uuid.uuid4().hex[:8]}"
-            
-            print(f"Created temporary React project: {temp_dir}")
-            
-            # Create project structure
-            src_dir = os.path.join(temp_dir, "src")
-            os.makedirs(src_dir, exist_ok=True)
-            
-            # Write package.json
-            package_json = {
-                "name": "react-app",
-                "type": "module",
-                "scripts": {
-                    "dev": "vite --host 0.0.0.0 --port 3001"
-                },
-                "dependencies": {
-                    "react": "^18.2.0",
-                    "react-dom": "^18.2.0",
-                    "vite": "^5.0.0",
-                    "@vitejs/plugin-react": "^4.2.0"
-                }
-            }
-            
-            with open(os.path.join(temp_dir, "package.json"), "w") as f:
-                json.dump(package_json, f, indent=2)
-            
-            # Write vite config with allowed hosts for Docker networking
-            vite_config = """import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    host: '0.0.0.0',
-    port: 3001,
-    strictPort: true,
-    hmr: {
-      clientPort: 3001
-    }
-  }
-})
-"""
-            with open(os.path.join(temp_dir, "vite.config.js"), "w") as f:
-                f.write(vite_config)
-            
-            # Write index.html
-            index_html = """<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>React Lab</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>
-"""
-            with open(os.path.join(temp_dir, "index.html"), "w") as f:
-                f.write(index_html)
-            
-            # Write user's React component
-            with open(os.path.join(src_dir, "App.jsx"), "w") as f:
-                f.write(code)
-            
-            # Write main.jsx entry point
-            main_jsx = """import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
-
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
-"""
-            with open(os.path.join(src_dir, "main.jsx"), "w") as f:
-                f.write(main_jsx)
-            
-            # Spawn Node Docker container
-            print(f"Spawning Node.js Docker container: {container_name}")
-            
-            # Run Docker container with npm install and vite dev server
-            process = await asyncio.create_subprocess_exec(
-                'docker', 'run', '--rm',
-                '--name', container_name,
-                '-p', '3001:3001',
-                '-v', f'{temp_dir}:/app',
-                '-w', '/app',
-                '--memory=1g',
-                '--cpus=1',
-                'node:20-slim',
-                'sh', '-c', 
-                'npm install --silent && npx vite --host 0.0.0.0 --port 3001',
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+            success, output, logs, exit_code, screenshots = await self.execute_react_project(
+                project_files=project_files,
+                routes=["/"],
+                job_id=f"simple_{uuid.uuid4().hex[:8]}",
+                task_id=f"task_{uuid.uuid4().hex[:8]}",
+                username="User"
             )
             
-            # Wait for server to start
-            print("Waiting for Vite dev server to start...")
-            await asyncio.sleep(10)
+            # For simple single-file React execution, we just return the first route's output
+            if screenshots and len(screenshots) > 0:
+                # Screenshots contain the rendered HTML, but we want to return it as output
+                output_html = output if output else "React app rendered successfully"
+            else:
+                output_html = output if output else "React app executed"
             
-            # Capture browser output with Playwright
-            console_logs = []
-            output_html = ""
-            
-            async with async_playwright() as p:
-                browser = await p.chromium.launch(headless=True)
-                page = await browser.new_page()
-                
-                # Capture console logs
-                page.on("console", lambda msg: console_logs.append(f"[{msg.type}] {msg.text}"))
-                
-                try:
-                    # Visit the dev server via host.docker.internal
-                    await page.goto("http://host.docker.internal:3001", timeout=10000)
-                    
-                    # Wait for React to render
-                    await page.wait_for_timeout(3000)
-                    
-                    # Get rendered HTML
-                    output_html = await page.content()
-                except Exception as e:
-                    print(f"Failed to load React app: {str(e)}")
-                    output_html = f"Failed to load React app: {str(e)}"
-                
-                await browser.close()
-            
-            # Terminate Docker container
-            try:
-                terminate_process = await asyncio.create_subprocess_exec(
-                    'docker', 'stop', container_name,
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE
-                )
-                await terminate_process.wait()
-            except:
-                pass
-            
-            # Format console logs
-            logs = "\n".join(console_logs) if console_logs else ""
-            
-            print(f"React execution completed successfully")
-            return True, output_html, logs, 0
+            return success, output_html, logs, exit_code
             
         except Exception as e:
-            print(f"React execution error: {str(e)}")
+            print(f"[React Code] Error: {str(e)}")
             return False, "", f"React execution error: {str(e)}", 1
-        finally:
-            # Cleanup
-            if container_name:
-                try:
-                    stop_process = await asyncio.create_subprocess_exec(
-                        'docker', 'stop', container_name,
-                        stdout=asyncio.subprocess.PIPE,
-                        stderr=asyncio.subprocess.PIPE
-                    )
-                    await asyncio.wait_for(stop_process.wait(), timeout=5.0)
-                except:
-                    pass
-            
-            if temp_dir and os.path.exists(temp_dir):
-                try:
-                    shutil.rmtree(temp_dir)
-                except:
-                    pass
     
     async def _execute_node_code(self, code: str) -> Tuple[bool, str, str, int]:
         """Execute Node.js/Express code"""
@@ -984,17 +864,37 @@ export default FileExplorer;
         
         # Create main.jsx with FileExplorer wrapper
         main_jsx_path = os.path.join(src_dir, "main.jsx")
-        # Extract file list and normalize paths
-        file_list = []
-        for f in project_files.keys():
-            normalized = f.replace('src/', '').replace('src\\', '')
-            file_list.append(f"src/{normalized}")
-        file_list_str = str(file_list).replace("'", '"')
         
-        main_jsx_content = """import React from 'react'
+        # Determine the actual App filename and CSS filename after JSX detection
+        app_filename = "App.jsx"  # Default
+        css_filename = "App.css"   # Default
+        
+        for filepath, content in project_files.items():
+            normalized = filepath.replace("src/", "").replace("src\\", "")
+            
+            # Check App.js file
+            if normalized == "App.js":
+                # Check if it contains JSX
+                contains_jsx = False
+                try:
+                    if re.search(r'\bimport\s+React\b', content) or re.search(r'<[A-Za-z]', content):
+                        contains_jsx = True
+                except Exception:
+                    contains_jsx = False
+                
+                if contains_jsx:
+                    app_filename = "App.jsx"
+                else:
+                    app_filename = "App.js"
+            
+            # Check for CSS files
+            if normalized.endswith('.css'):
+                css_filename = normalized
+        
+        main_jsx_content = f"""import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
-import './App.css'
+import App from './{app_filename}'
+import './{css_filename}'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -1045,10 +945,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             'echo "=== Starting React project ===" && '
             'echo "Current directory: $(pwd)" && '
             'echo "Files in /app:" && ls -la /app && '
-            'echo "=== Installing dependencies ===" && '
-            'npm install --silent --no-audit --no-fund 2>&1 && '
+            'echo "=== Testing npm registry connectivity ===" && '
+            'timeout 10 npm ping || echo "npm registry unreachable, continuing anyway..." && '
+            'echo "=== Installing dependencies (timeout: 60s) ===" && '
+            'timeout 60 npm install --no-audit --no-fund --loglevel verbose 2>&1 && '
+            'echo "=== Dependencies installed successfully ===" && '
             'echo "=== Starting Vite dev server ===" && '
-            f'npx vite --host --port {port} --logLevel info'
+            f'npx vite --host --port {port} --logLevel info 2>&1'
         )
         
         print(f"[React Project] Starting container with command: {startup_cmd[:100]}...")
