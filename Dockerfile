@@ -16,6 +16,9 @@ COPY frontend/ ./
 # Verify lib directory exists
 RUN ls -la lib/ || echo "lib directory not found"
 
+# Clean any existing build cache
+RUN rm -rf .next
+
 # Build frontend
 RUN npm run build
 
