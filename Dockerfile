@@ -2,19 +2,17 @@
 # Stage 1: Build Frontend (Next.js)
 FROM node:20-alpine AS frontend-builder
 
-WORKDIR /app/frontend
+WORKDIR /app
 
 # Copy frontend package files
-COPY frontend/package*.json ./
+COPY frontend/package*.json ./frontend/
 
 # Install frontend dependencies
+WORKDIR /app/frontend
 RUN npm ci
 
-# Copy frontend source code (including lib directory)
+# Copy frontend source code
 COPY frontend/ ./
-
-# Verify files are copied correctly
-RUN ls -la && ls -la lib/
 
 # Build frontend
 RUN npm run build
