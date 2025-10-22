@@ -21,10 +21,10 @@ import {
   useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '../ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import ScreenshotCard from './ScreenshotCard'
-import { JobStatus } from '@/lib/api'
+import { JobStatus } from '../../lib/api'
 import { Download, FileText, RefreshCw } from 'lucide-react'
 
 interface PreviewGridProps {

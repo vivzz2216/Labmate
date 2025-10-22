@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Mail, Lock, User, Eye, EyeOff } from 'lucide-react'
-import { useAuth } from '@/contexts/BasicAuthContext'
+import { useAuth } from '../../contexts/BasicAuthContext'
 
 interface LoginModalProps {
   isOpen: boolean

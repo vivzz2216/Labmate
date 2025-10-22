@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '../ui/card'
+import { Button } from '../ui/button'
 import { Trash2, GripVertical, Eye, Download } from 'lucide-react'
-import { JobStatus } from '@/lib/api'
-import { truncateText } from '@/lib/utils'
+import { JobStatus } from '../../lib/api'
+import { truncateText } from '../../lib/utils'
 
 interface ScreenshotCardProps {
   job: JobStatus

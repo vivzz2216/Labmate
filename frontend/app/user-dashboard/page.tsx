@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { useAuth } from '@/contexts/BasicAuthContext'
+import { useAuth } from '../../contexts/BasicAuthContext'
 import { useRouter } from 'next/navigation'
-import { apiService } from '@/lib/api'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { apiService } from '../../lib/api'
+import { Button } from '../../components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
 import { FileText, Upload, Calendar, CheckCircle, XCircle, Clock, Download } from 'lucide-react'
 
 interface Assignment {

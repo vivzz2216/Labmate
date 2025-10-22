@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Switch } from '@/components/ui/switch'
-import { Progress } from '@/components/ui/progress'
+import { Button } from '../ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
+import { Switch } from '../ui/switch'
+import { Progress } from '../ui/progress'
 import { CheckCircle, XCircle, Clock, Code, Play, Eye } from 'lucide-react'
-import { apiService, type Task, type JobStatus } from '@/lib/api'
-import { truncateText } from '@/lib/utils'
+import { apiService, type Task, type JobStatus } from '../../lib/api'
+import { truncateText } from '../../lib/utils'
 
 interface TaskListProps {
   tasks: Task[]

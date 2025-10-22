@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { apiService } from '@/lib/api'
+import { apiService } from '../lib/api'
 
 interface User {
   id: number
