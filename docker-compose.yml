@@ -29,12 +29,12 @@ services:
       - REPORT_DIR=/app/reports
       - REACT_TEMP_DIR=/app/react_temp
       - HOST_PROJECT_ROOT=${PWD}
-      - OPENAI_API_KEY=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
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_MODEL=gpt-4o-mini
       - OPENAI_MAX_TOKENS=4000
-      - FIREBASE_PROJECT_ID=labma-24543
-      - FIREBASE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC163TtYbtA/hLv\n/P1zsp48t9BlARqMM0o/VRj9DBV6zabfjZcGn4ueBPZQ1OcnPbkpH2DnxJuS38Mp\nm8hILWHnOdEYMgVbJ2hKgmPZh/QqM/G8zCN4XS9En8KbbWNjZ1rDitYSJvmlI2km\nFjgtbiItFwCWIa2ydzdiufGQwFWBtF5hPpJY4KTrwZ/CnLnXJHPXTSFz/hJ7T/Nr\nQJSMtkndc2d0cu3DkVhCLQTYI6yf+Yl0S1NuxiE5GYfS2d903EhnYoG6WJxWs2dl\n5uyG3et34nZrXy19fgJe6h5+GQe2MvY+tIdNu/e6eVRGxWS5Jbt14aD8v835ywwX\nbmsQJLfBAgMBAAECggEAAaLoDtiRtCB08Caw6vEA3l/y5m2vnPI7KT2tN1179fpS\nlXEzGhKmUVoPEyQPHjm+aCHJn9wTYCtWGJI3p3qNBmTtPg/5H1xH4l+w4TyJVDXa\nZ03YxdTkv3PGbtp5iePcm6Ssj0Y9eaBLalXJ1JLIiOpLjY4o/1F2NJOimiA4xK1k\nQ2I3j+dqwKjYbRohEyKcC4q6CAJKAUnuib2uNypUJBEhtUQy4PKZ/PcU5HmF50pl\nfoyr2GrJjx5LkcGzlVgVSytG5AtdrW1b7ehuW8hv0Kq3aD2pCvB8uvo8hnzoVVqc\nfp/fCohv7ZBqvL6w6IhArwityxDGNYnYKduBuHb/iQKBgQDtx64tbNIgLbpmpv5K\nLDb+MIMpiWoOK+/G6IFHn/0ZjKr9tJu56vePcHQ36pia2UL35JuRsoBNyTACYUIB\ntaw4ERG6YR/I1uJB7xGaJDPlhAx3JZXR9W+Gh1NsX3pTSqKvR2+WrIOSUwuglXtW\nCgRYQLOM10U5YkDvb6nLm4l5jQKBgQDD3APuv8VG03taIosI2VBk3dKfOUImzOf1\nERd5uJeeA1120lZhKdEuaJlgxWkITaPFesUU2+qj7QtQAabq+N9ylsYBLvyVfTIM\nz+si9RnN4xpcqI2F1EHe3sS6Dl01SKEP7cYP8EQjZRt+pErb/r+VdUs/5rKy2tPZ\neTpGcXi4BQKBgQDbU7uK9PyhZ+yvMUwP2NblApSJpNHpvodOnzpYee+5OHKk0Ipw\nJJczfRQGW+Nlug+2nu0MqG0G0xPwrgt3jj8L/Fqw41OxKtzK2p0O5GPmSjZBVK7s\nWwsDOSIvLaak24xSR39bqUc3mlh4SEna5CR7zzqPKCYXN1UURpiFUbOuJQKBgAml\noJv13iWq7Px3jxmUep09P86P52450YMEoH9iVDV4PPZJTe/jO2ZpyIQ3tQCvsk1b\nyrFIU7pXRqNeMXaJY5glTQNp6Q8D558x7ob+Q5MciIPf2XiqB8SOfGodowGo3iYG\ntCa80t5bcItAVF+ZoJ4f9ODk4BBnLuAbVH97v1JxAoGBAKE68AUnjx6dXGEUnu5Z\n9Lo8GBqxjN8f/7+13WwJYd/bi98lLtBBlJw50tG6ISg0js4ZgoZhgSzhEZHEW7G9\niM9JJHdY+GbaqS3aKT9yOv03x5Vym1XlUlYmm+TvldkScXRixC743q6Cn8SedlGA\nW+NpF5lq9qH8NCNW0IV83Fbq\n-----END PRIVATE KEY-----
-      - FIREBASE_CLIENT_EMAIL=firebase-adminsdk-fbsvc@labma-24543.iam.gserviceaccount.com
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
+      - FIREBASE_PRIVATE_KEY=${FIREBASE_PRIVATE_KEY}
+      - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL}
     volumes:
       - ./backend/uploads:/app/uploads
       - ./backend/screenshots:/app/screenshots
@@ -53,7 +53,7 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://host.docker.internal:8000
-      - NEXT_PUBLIC_FIREBASE_CONFIG={"apiKey":"AIzaSyCgFMFaKWOKJ-7FQ7AeUvwevuPxpmelWAI","authDomain":"labma-24543.firebaseapp.com","projectId":"labma-24543","storageBucket":"labma-24543.firebasestorage.app","messagingSenderId":"324302201967","appId":"1:324302201967:web:cf2e99cad1551ad5d1d99a","measurementId":"G-WG6W3NZY5D"}
+      - NEXT_PUBLIC_FIREBASE_CONFIG=${NEXT_PUBLIC_FIREBASE_CONFIG}
     depends_on:
       - backend
     command: npm start

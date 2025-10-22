@@ -627,16 +627,19 @@ class ExecutorService:
                 except:
                     pass
     
-    async def execute_react_project(self, project_files: dict, routes: list = None) -> Tuple[bool, dict, str, int]:
+    async def execute_react_project(self, project_files: dict, routes: list = None, job_id: str = None, task_id: str = None, username: str = None) -> Tuple[bool, str, str, int, dict]:
         """
         Execute complete React project with multiple files
         
         Args:
             project_files: Dictionary of {filepath: content}
             routes: List of routes to capture screenshots for
+            job_id: Job identifier
+            task_id: Task identifier
+            username: Username for the task
         
         Returns:
-            Tuple of (success, screenshots_by_route, logs, exit_code)
+            Tuple of (success, output, logs, exit_code, screenshots_by_route)
             screenshots_by_route: {"/": "html1", "/about": "html2", ...}
         """
         temp_dir = None
@@ -694,11 +697,11 @@ class ExecutorService:
             screenshots = await self._capture_react_routes(routes or ["/"], port, container_name)
             
             print(f"[React Project] Successfully captured {len(screenshots)} routes")
-            return True, screenshots, "All routes captured successfully", 0
+            return True, "All routes captured successfully", "All routes captured successfully", 0, screenshots
             
         except Exception as e:
             print(f"[React Project] Error: {str(e)}")
-            return False, {}, f"React project execution failed: {str(e)}", 1
+            return False, f"React project execution failed: {str(e)}", f"React project execution failed: {str(e)}", 1, {}
         finally:
             await self._cleanup_react_project(temp_dir, container_name)
     
@@ -902,7 +905,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   </React.StrictMode>
 )
 """
-            with open(main_jsx_path, "w") as f:
+        with open(main_jsx_path, "w") as f:
             f.write(main_jsx_content)
         print("[React Project] Created clean main.jsx")
     
@@ -919,6 +922,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             )
         except:
             pass
+        
         
         # Calculate host path for Docker volume mount
         # The temp_dir is /app/react_temp/react_spa_xxx inside the backend container
@@ -1028,7 +1032,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                 async with aiohttp.ClientSession() as session:
                     try:
                         async with session.get(f"http://{container_name}:{port}", timeout=aiohttp.ClientTimeout(total=3)) as resp:
-                        if resp.status == 200:
+                            if resp.status == 200:
                                 text = await resp.text()
                                 # Basic sanity checks: index served and root exists or vite client present
                                 if '<div id="root"' in text or 'vite/client' in text or '/@vite/client' in text:
@@ -1334,11 +1338,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             await browser.close()
         
         return screenshots
-    
+
     async def _cleanup_react_project(self, temp_dir: str, container_name: str):
         """Clean up temporary files and containers"""
         print("[React Project] Cleaning up...")
-        
+
         # Stop and remove container
         if container_name:
             try:
