@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: labmate
+      POSTGRES_PASSWORD: labmate_password
+      POSTGRES_DB: labmate_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U labmate -d labmate_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+      # Note: Ports 3000 and 3001 are used internally by Docker-in-Docker containers
+      # They communicate with Playwright inside the backend container via localhost
+    environment:
+      - DATABASE_URL=postgresql://labmate:labmate_password@postgres:5432/labmate_db
+      - BETA_KEY=your_beta_key_here
+      - UPLOAD_DIR=/app/uploads
+      - SCREENSHOT_DIR=/app/screenshots
+      - REPORT_DIR=/app/reports
+      - REACT_TEMP_DIR=/app/react_temp
+      - HOST_PROJECT_ROOT=${PWD}
+      - OPENAI_API_KEY=your_openai_api_key_here
+      - OPENAI_MODEL=gpt-4o-mini
+      - OPENAI_MAX_TOKENS=4000
+      - FIREBASE_PROJECT_ID=your_firebase_project_id
+      - FIREBASE_PRIVATE_KEY=your_firebase_private_key_here
+      - FIREBASE_CLIENT_EMAIL=your_firebase_client_email_here
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/screenshots:/app/screenshots
+      - ./backend/reports:/app/reports
+      - ./backend/react_temp:/app/react_temp  # Temp directory for React projects
+      - /var/run/docker.sock:/var/run/docker.sock  # Mount Docker socket for Docker-in-Docker
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://host.docker.internal:8000
+      - NEXT_PUBLIC_FIREBASE_CONFIG={"apiKey":"your_firebase_api_key","authDomain":"your_project.firebaseapp.com","projectId":"your_project_id","storageBucket":"your_project.appspot.com","messagingSenderId":"123456789","appId":"1:123456789:web:abcdef123456","measurementId":"G-XXXXXXXXXX"}
+    depends_on:
+      - backend
+    command: npm start
+
+volumes:
+  postgres_data:
