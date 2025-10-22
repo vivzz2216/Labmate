@@ -6,8 +6,13 @@ from .config import settings
 from .database import engine, Base
 from .routers import upload, parse, run, compose, download, analyze, tasks, assignments, basic_auth
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
+# Create database tables with error handling
+try:
+    Base.metadata.create_all(bind=engine)
+    print("✓ Database tables created successfully")
+except Exception as e:
+    print(f"⚠ Warning: Could not create database tables: {e}")
+    print("The application will continue, but database features may not work.")
 
 # Create FastAPI app
 app = FastAPI(
