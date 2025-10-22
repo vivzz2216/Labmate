@@ -59,15 +59,6 @@ app.include_router(assignments.router, prefix="/api/assignments", tags=["assignm
 app.include_router(basic_auth.router, prefix="/api/basic-auth", tags=["basic-auth"])
 
 
-@app.get("/")
-async def root():
-    return {"message": "LabMate AI API is running"}
-
-
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy"}
-
 @app.get("/api/health")
 async def api_health_check():
     return {"status": "healthy", "service": "LabMate AI API", "version": "1.0.0"}

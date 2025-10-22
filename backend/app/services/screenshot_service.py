@@ -380,11 +380,6 @@ print("Screenshot test successful!")
                 # Create filename based on the file path
                 filename = file_path.replace("src/", "").replace("/", "_").replace("\\", "_")
                 
-                print(f"[Screenshot Service] Processing file: {file_path}")
-                print(f"[Screenshot Service] In code_only_files: {file_path in code_only_files}")
-                print(f"[Screenshot Service] In browser_output_files: {file_path in browser_output_files}")
-                print(f"[Screenshot Service] In route_component_mapping: {file_path in route_component_mapping}")
-                
                 # Check if this file should only show VS Code (no browser output)
                 if file_path in code_only_files:
                     # Generate code-only screenshot for CSS files, etc.

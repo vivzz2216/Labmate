@@ -788,8 +788,8 @@
         
         // Get code and output from URL parameters or use defaults
         const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code') || `{{ code_content | replace('`', '\\`') | replace('\n', '\\n') | replace('\r', '\\r') }}`;
-        const output = urlParams.get('output') || `{{ output_content | replace('`', '\\`') | replace('\n', '\\n') | replace('\r', '\\r') or 'Hello, World!' }}`;
+        const code = urlParams.get('code') || {{ (code_content or '') | tojson }};
+        const output = urlParams.get('output') || {{ (output_content or 'Hello, World!') | tojson }};
         
         updateCode(code);
         updateLineNumbers(code);
