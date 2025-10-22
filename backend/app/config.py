@@ -5,7 +5,12 @@ import os
 
 class Settings(BaseSettings):
     # Database - Railway will provide DATABASE_URL environment variable
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://labmate:labmate_password@postgres:5432/labmate_db")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "")
+    
+    # Validate DATABASE_URL
+    if not DATABASE_URL:
+        print("⚠ WARNING: DATABASE_URL is not set! Database features will not work.")
+        print("Please set DATABASE_URL in Railway environment variables.")
     
     # Security
     BETA_KEY: str = "your_beta_key_here"
