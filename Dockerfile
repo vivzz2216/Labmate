@@ -19,8 +19,11 @@ RUN ls -la && echo "--- Checking for lib directory ---" && ls -la lib/ || echo "
 # Clean any existing build cache
 RUN rm -rf .next
 
-# Build frontend
-RUN npm run build
+# Build frontend with verbose output
+RUN npm run build --verbose
+
+# Verify .next directory was created
+RUN ls -la && echo "--- Checking for .next directory ---" && ls -la .next/ || echo ".next directory not found"
 
 # Stage 2: Build Backend (Python + FastAPI)
 FROM python:3.10-slim
