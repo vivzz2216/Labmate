@@ -46,7 +46,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    checkStoredUser()
+    // Add a small delay to prevent flash
+    const timer = setTimeout(checkStoredUser, 100)
+    
+    // Fallback timeout to prevent infinite loading
+    const fallbackTimer = setTimeout(() => {
+      setLoading(false)
+    }, 2000)
+    
+    return () => {
+      clearTimeout(timer)
+      clearTimeout(fallbackTimer)
+    }
   }, [])
 
   const signup = async (email: string, name: string, password: string) => {
