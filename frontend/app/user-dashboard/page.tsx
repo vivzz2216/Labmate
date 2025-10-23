@@ -57,6 +57,7 @@ export default function UserDashboard() {
 
   const handleSignOut = async () => {
     await signOut()
+    router.push('/')
   }
 
   const handleUploadNew = () => {

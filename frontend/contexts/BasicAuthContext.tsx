@@ -109,8 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('labmate_user')
       setUser(null)
       
-      // Redirect to homepage
-      router.push('/')
+      // Don't redirect here - let the page component handle it
     } catch (error) {
       console.error('Signout failed:', error)
     } finally {
