@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,21 +11,49 @@ import { ArrowLeft, AlertCircle, CheckCircle, FileText } from 'lucide-react'
 import { apiService, type UploadResponse, type Task, type JobStatus, type AITaskCandidate, type TaskSubmission, type TaskResult } from '@/lib/api'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/BasicAuthContext'
 
 export default function DashboardPage() {
   const router = useRouter()
+  const { user, loading } = useAuth()
   const [currentStep, setCurrentStep] = useState<'upload' | 'ai_suggestions' | 'tasks' | 'results'>('upload')
   const [upload, setUpload] = useState<UploadResponse | null>(null)
   const [tasks, setTasks] = useState<Task[]>([])
   const [aiCandidates, setAICandidates] = useState<AITaskCandidate[]>([])
   const [jobResults, setJobResults] = useState<TaskResult[]>([])
   const [currentJobId, setCurrentJobId] = useState<number | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loadingState, setLoadingState] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showLanguageModal, setShowLanguageModal] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null)
   const [showFilenameModal, setShowFilenameModal] = useState(false)
   const [customFilename, setCustomFilename] = useState('')
+
+  // Redirect to homepage if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/')
+    }
+  }, [user, loading, router])
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3 mx-auto mb-4">
+            <FileText className="w-4 h-4 text-white" />
+          </div>
+          <p className="text-white/80">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Don't render anything if not authenticated (will redirect)
+  if (!user) {
+    return null
+  }
 
   const handleUploadComplete = async (uploadResponse: UploadResponse) => {
     setUpload(uploadResponse)
@@ -38,7 +66,7 @@ export default function DashboardPage() {
     
     // Skip filename modal for Java, HTML, React, Node since we extract names from code or use defaults
     if (['java', 'html', 'react', 'node'].includes(language)) {
-      setLoading(true)
+      setLoadingState(true)
       setError(null)
 
       try {
@@ -58,7 +86,7 @@ export default function DashboardPage() {
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to analyze document. Please check your OpenAI API key and billing.')
       } finally {
-        setLoading(false)
+        setLoadingState(false)
       }
     } else {
       // Show filename modal for Python and C
@@ -114,14 +142,14 @@ export default function DashboardPage() {
           setJobResults(statusResponse.tasks)
           
           if (statusResponse.status === 'completed' || statusResponse.status === 'failed') {
-            setLoading(false)
+            setLoadingState(false)
             setCurrentStep('results')
           } else {
             // Continue polling
             setTimeout(pollJobStatus, 2000)
           }
         } catch (err) {
-          setLoading(false)
+          setLoadingState(false)
           setError(err instanceof Error ? err.message : 'Failed to get job status')
         }
       }
@@ -563,10 +591,10 @@ export default function DashboardPage() {
                 </button>
                 <button
                   onClick={handleFilenameSubmit}
-                  disabled={loading || !customFilename.trim()}
+                  disabled={loadingState || !customFilename.trim()}
                   className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300"
                 >
-                  {loading ? 'Processing...' : 'Continue'}
+                  {loadingState ? 'Processing...' : 'Continue'}
                 </button>
               </div>
             </div>
