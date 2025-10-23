@@ -100,7 +100,7 @@ export default function DashboardPage() {
       return
     }
 
-    setLoading(true)
+    setLoadingState(true)
     setError(null)
 
     try {
@@ -115,14 +115,14 @@ export default function DashboardPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to analyze document. Please check your OpenAI API key and billing.')
     } finally {
-      setLoading(false)
+      setLoadingState(false)
     }
   }
 
   const handleAITaskSubmit = async (submissions: TaskSubmission[], theme: string, insertionPreference: string) => {
     if (!upload) return
     
-    setLoading(true)
+    setLoadingState(true)
     setError(null)
 
     try {
@@ -158,7 +158,7 @@ export default function DashboardPage() {
       setTimeout(pollJobStatus, 1000)
       
     } catch (err) {
-      setLoading(false)
+      setLoadingState(false)
       setError(err instanceof Error ? err.message : 'Failed to submit tasks')
     }
   }
