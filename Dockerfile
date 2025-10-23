@@ -6,7 +6,7 @@ WORKDIR /app/frontend
 
 # Copy package files and install dependencies
 COPY frontend/package*.json.bak ./
-RUN mv package.json.bak package.json && npm ci
+RUN mv package.json.bak package.json && npm install
 
 # Copy all frontend source (exclude node_modules and .next)
 COPY frontend/next.config.js ./
