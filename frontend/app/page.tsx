@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/BasicAuthContext'
 import { useRouter } from 'next/navigation'
@@ -36,8 +36,29 @@ export default function LandingPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
 
+  // Redirect to dashboard if user is already authenticated
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/dashboard')
+    }
+  }, [user, loading, router])
+
   const handleGetStarted = () => {
     setShowLoginModal(true)
+  }
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3 mx-auto mb-4">
+            <FileText className="w-4 h-4 text-white" />
+          </div>
+          <p className="text-white/80">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
