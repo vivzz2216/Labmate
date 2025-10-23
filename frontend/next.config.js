@@ -1,17 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
   images: {
-    domains: ['localhost'],
+    unoptimized: true, // Required for static export
   },
-  async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${apiUrl}/api/:path*`,
-      },
-    ]
-  },
+  trailingSlash: true, // Better for static hosting
+  // Remove rewrites for static export (API calls will be direct)
 }
 
 module.exports = nextConfig

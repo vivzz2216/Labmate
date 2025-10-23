@@ -20,37 +20,15 @@ RUN echo ">>> WORKDIR: $(pwd)" && ls -la && echo ">>> files in frontend:" && ls 
 # Clean any existing build cache
 RUN rm -rf frontend/.next
 
-# Build frontend with verbose output and error handling
-RUN echo "--- Starting Next.js build ---" && \
+# Build frontend as static export
+RUN echo "--- Starting Next.js static build ---" && \
     cd frontend && \
-    npm run build --verbose 2>&1 | tee build.log && \
+    npm run build && \
     echo "--- Build completed successfully ---" && \
-    cat build.log && \
-    echo "--- Checking build exit code ---" && \
-    echo "Build exit code: $?" && \
-    echo "--- Checking if .next directory was created during build ---" && \
-    ls -la .next || echo ".next directory not found during build!" && \
-    echo "--- Checking for any build artifacts ---" && \
-    find . -name "*.js" -o -name "*.css" -o -name "*.html" | head -10 && \
-    echo "--- Checking for any error logs ---" && \
-    find . -name "*.log" -o -name "*.error" | head -5 && \
-    echo "--- Checking Next.js version ---" && \
-    npm list next && \
-    echo "--- Checking if Next.js is properly installed ---" && \
-    npx next --version && \
-    echo "--- Checking Next.js configuration ---" && \
-    cat next.config.js && \
-    echo "--- Checking package.json build script ---" && \
-    cat package.json | grep -A 5 -B 5 "build" && \
-    echo "--- Trying to run Next.js build manually ---" && \
-    npx next build --verbose && \
-    echo "--- Checking if .next was created after manual build ---" && \
-    ls -la .next || echo ".next still not found after manual build"
-
-# Verify .next directory was created (will fail build early if not)
-RUN echo "--- Final verification: .next directory ---" && \
-    cd frontend && \
-    ls -la .next || (echo "ERROR: .next directory not found!" && exit 1)
+    echo "--- Checking if out directory was created ---" && \
+    ls -la out && \
+    echo "--- Showing static files ---" && \
+    find out -type f | head -20
 
 # Stage 2: Build Backend (Python + FastAPI)
 FROM python:3.10-slim
@@ -102,10 +80,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend application code
 COPY backend/ .
 
-# Copy built frontend from frontend builder
-COPY --from=frontend-builder /app/frontend/.next /app/frontend/.next
+# Copy static frontend from frontend builder
+COPY --from=frontend-builder /app/frontend/out /app/frontend
 COPY --from=frontend-builder /app/frontend/public /app/frontend/public
-COPY --from=frontend-builder /app/frontend/package*.json /app/frontend/
 
 # Explicitly copy public images
 COPY backend/app/public /app/public

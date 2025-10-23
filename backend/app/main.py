@@ -31,22 +31,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve static files from frontend build
+# Serve static frontend files
 frontend_path = "/app/frontend"
 if os.path.exists(frontend_path):
-    app.mount("/static", StaticFiles(directory=f"{frontend_path}/.next/static"), name="static")
-    app.mount("/_next", StaticFiles(directory=f"{frontend_path}/.next"), name="next")
-    app.mount("/public", StaticFiles(directory=f"{frontend_path}/public"), name="public")
+    # Mount static frontend (Next.js export)
+    app.mount("/_next", StaticFiles(directory=frontend_path, html=True), name="frontend")
 
 # Serve frontend for all non-API routes
 @app.get("/{path:path}")
 async def serve_frontend(path: str):
     # Don't serve frontend for API routes
-    if path.startswith("api/") or path.startswith("health") or path.startswith("docs"):
+    if path.startswith("api/") or path.startswith("health") or path.startswith("docs") or path.startswith("uploads") or path.startswith("screenshots") or path.startswith("reports") or path.startswith("public"):
         return {"message": "Not found"}
     
     # Serve frontend index.html for all other routes
-    frontend_index = "/app/frontend/.next/server/pages/index.html"
+    frontend_index = "/app/frontend/index.html"
     if os.path.exists(frontend_index):
         return FileResponse(frontend_index)
     else:
