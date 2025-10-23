@@ -71,7 +71,7 @@ COPY backend/app/public /app/public
 # Create necessary directories
 RUN mkdir -p /app/uploads /app/screenshots /app/reports
 
-# Copy start script
+# Copy start script (use start.sh, not start-fullstack.sh)
 COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
