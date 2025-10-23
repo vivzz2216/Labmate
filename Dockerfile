@@ -28,24 +28,7 @@ RUN echo "--- Starting Next.js build ---" && \
     echo "--- Checking build exit code ---" && \
     echo "Build exit code: $?" && \
     echo "--- Checking if .next directory was created during build ---" && \
-    ls -la .next || echo ".next directory not found during build!"
-
-# Show build output and check for errors
-RUN echo "--- Build completed, checking output ---" && \
-    echo "--- Build log content ---" && \
-    cat build.log && \
-    echo "--- Checking for errors in build log ---" && \
-    grep -i "error\|failed\|warning" build.log || echo "No errors found in build log" && \
-    echo "--- Checking for TypeScript errors ---" && \
-    grep -i "typescript\|ts\|compilation" build.log || echo "No TypeScript errors found" && \
-    echo "--- Current directory structure ---" && \
-    ls -la && \
-    echo "--- Checking for .next directory ---" && \
-    ls -la .next || echo ".next directory not found - build failed!"
-
-# Verify .next directory was created (will fail build early if not)
-RUN echo "--- Final verification: .next directory ---" && \
-    ls -la .next || (echo "ERROR: .next directory not found!" && \
+    ls -la .next || echo ".next directory not found during build!" && \
     echo "--- Checking for any build artifacts ---" && \
     find . -name "*.js" -o -name "*.css" -o -name "*.html" | head -10 && \
     echo "--- Checking for any error logs ---" && \
@@ -61,8 +44,11 @@ RUN echo "--- Final verification: .next directory ---" && \
     echo "--- Trying to run Next.js build manually ---" && \
     npx next build --verbose && \
     echo "--- Checking if .next was created after manual build ---" && \
-    ls -la .next || echo ".next still not found after manual build" && \
-    exit 1)
+    ls -la .next || echo ".next still not found after manual build"
+
+# Verify .next directory was created (will fail build early if not)
+RUN echo "--- Final verification: .next directory ---" && \
+    ls -la .next || (echo "ERROR: .next directory not found!" && exit 1)
 
 # Stage 2: Build Backend (Python + FastAPI)
 FROM python:3.10-slim
