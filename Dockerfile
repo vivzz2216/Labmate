@@ -8,8 +8,17 @@ WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm ci
 
-# Copy all frontend source
-COPY frontend/ ./
+# Copy all frontend source (exclude node_modules and .next)
+COPY frontend/next.config.js ./
+COPY frontend/tsconfig.json ./
+COPY frontend/tailwind.config.ts ./
+COPY frontend/postcss.config.js ./
+COPY frontend/app/ ./app/
+COPY frontend/components/ ./components/
+COPY frontend/contexts/ ./contexts/
+COPY frontend/lib/ ./lib/
+COPY frontend/public/ ./public/
+COPY frontend/styles/ ./styles/
 
 # Build and export static files
 RUN npm run build
