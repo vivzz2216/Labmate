@@ -56,7 +56,6 @@ services:
       - NEXT_PUBLIC_FIREBASE_CONFIG=${NEXT_PUBLIC_FIREBASE_CONFIG}
     depends_on:
       - backend
-    command: npm start
 
 volumes:
   postgres_data:
