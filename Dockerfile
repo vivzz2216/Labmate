@@ -2,26 +2,27 @@
 # Stage 1: Build Frontend (Next.js)
 FROM node:20-alpine AS frontend-builder
 
-# Be explicit about working directory
-WORKDIR /app/frontend
+# Set working directory
+WORKDIR /app
 
 # Copy package files first for better caching
-COPY frontend/package*.json ./
+COPY frontend/package*.json ./frontend/
 
 # Install dependencies
-RUN npm ci
+RUN cd frontend && npm ci
 
 # Copy source code
-COPY frontend/ ./
+COPY frontend/ ./frontend/
 
 # Sanity check: show directory structure before build
-RUN echo ">>> WORKDIR: $(pwd)" && ls -la && echo ">>> files in frontend:" && ls -la .
+RUN echo ">>> WORKDIR: $(pwd)" && ls -la && echo ">>> files in frontend:" && ls -la frontend/
 
 # Clean any existing build cache
-RUN rm -rf .next
+RUN rm -rf frontend/.next
 
 # Build frontend with verbose output and error handling
 RUN echo "--- Starting Next.js build ---" && \
+    cd frontend && \
     npm run build --verbose 2>&1 | tee build.log && \
     echo "--- Build completed successfully ---" && \
     cat build.log && \
@@ -48,6 +49,7 @@ RUN echo "--- Starting Next.js build ---" && \
 
 # Verify .next directory was created (will fail build early if not)
 RUN echo "--- Final verification: .next directory ---" && \
+    cd frontend && \
     ls -la .next || (echo "ERROR: .next directory not found!" && exit 1)
 
 # Stage 2: Build Backend (Python + FastAPI)
