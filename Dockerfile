@@ -20,11 +20,14 @@ RUN echo ">>> WORKDIR: $(pwd)" && ls -la && echo ">>> files in frontend:" && ls 
 # Clean any existing build cache
 RUN rm -rf .next
 
-# Build frontend with verbose output
-RUN npm run build --verbose
+# Build frontend with verbose output and error handling
+RUN echo "--- Starting Next.js build ---" && \
+    npm run build --verbose 2>&1 | tee build.log || (echo "Build failed!" && cat build.log && exit 1)
 
 # Show build output and check for errors
 RUN echo "--- Build completed, checking output ---" && \
+    echo "--- Build log content ---" && \
+    cat build.log && \
     echo "--- Current directory structure ---" && \
     ls -la && \
     echo "--- Checking for .next directory ---" && \
