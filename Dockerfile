@@ -2,19 +2,20 @@
 # Stage 1: Build Frontend (Next.js)
 FROM node:20-alpine AS frontend-builder
 
-WORKDIR /app
+# Be explicit about working directory
+WORKDIR /app/frontend
 
-# Copy frontend package files
+# Copy package files first for better caching
 COPY frontend/package*.json ./
 
-# Install frontend dependencies
+# Install dependencies
 RUN npm ci
 
-# Copy frontend source code (including lib directory)
+# Copy source code
 COPY frontend/ ./
 
-# Verify lib directory exists and show full directory structure
-RUN ls -la && echo "--- Checking for lib directory ---" && ls -la lib/ || echo "lib directory not found" && echo "--- Checking if lib exists as file ---" && find . -name "lib" -type d && echo "--- Contents of lib directory if it exists ---" && ls -la lib/ 2>/dev/null || echo "lib directory not accessible"
+# Sanity check: show directory structure before build
+RUN echo ">>> WORKDIR: $(pwd)" && ls -la && echo ">>> files in frontend:" && ls -la .
 
 # Clean any existing build cache
 RUN rm -rf .next
@@ -22,8 +23,15 @@ RUN rm -rf .next
 # Build frontend with verbose output
 RUN npm run build --verbose
 
-# Verify .next directory was created
-RUN ls -la && echo "--- Checking for .next directory ---" && ls -la .next/ || echo ".next directory not found"
+# Show build output and check for errors
+RUN echo "--- Build completed, checking output ---" && \
+    echo "--- Current directory structure ---" && \
+    ls -la && \
+    echo "--- Checking for .next directory ---" && \
+    ls -la .next || echo ".next directory not found - build failed!"
+
+# Verify .next directory was created (will fail build early if not)
+RUN echo "--- Final verification: .next directory ---" && ls -la .next
 
 # Stage 2: Build Backend (Python + FastAPI)
 FROM python:3.10-slim
