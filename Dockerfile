@@ -22,19 +22,29 @@ RUN rm -rf .next
 
 # Build frontend with verbose output and error handling
 RUN echo "--- Starting Next.js build ---" && \
-    npm run build --verbose 2>&1 | tee build.log || (echo "Build failed!" && cat build.log && exit 1)
+    npm run build --verbose 2>&1 | tee build.log && \
+    echo "--- Build completed successfully ---" && \
+    cat build.log
 
 # Show build output and check for errors
 RUN echo "--- Build completed, checking output ---" && \
     echo "--- Build log content ---" && \
     cat build.log && \
+    echo "--- Checking for errors in build log ---" && \
+    grep -i "error\|failed\|warning" build.log || echo "No errors found in build log" && \
     echo "--- Current directory structure ---" && \
     ls -la && \
     echo "--- Checking for .next directory ---" && \
     ls -la .next || echo ".next directory not found - build failed!"
 
 # Verify .next directory was created (will fail build early if not)
-RUN echo "--- Final verification: .next directory ---" && ls -la .next
+RUN echo "--- Final verification: .next directory ---" && \
+    ls -la .next || (echo "ERROR: .next directory not found!" && \
+    echo "--- Checking for any build artifacts ---" && \
+    find . -name "*.js" -o -name "*.css" -o -name "*.html" | head -10 && \
+    echo "--- Checking for any error logs ---" && \
+    find . -name "*.log" -o -name "*.error" | head -5 && \
+    exit 1)
 
 # Stage 2: Build Backend (Python + FastAPI)
 FROM python:3.10-slim
