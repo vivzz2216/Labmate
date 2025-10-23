@@ -62,7 +62,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend code
 COPY backend/ ./
 
-# Copy static exported frontend files from builder
+# Copy static exported frontend files from builder (only the out directory, no package.json)
 COPY --from=frontend-builder /app/frontend/out /app/frontend
 
 # Copy public images
