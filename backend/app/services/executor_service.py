@@ -905,7 +905,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   </React.StrictMode>
 )
 """
-        with open(main_jsx_path, "w") as f:
+            with open(main_jsx_path, "w") as f:
             f.write(main_jsx_content)
         print("[React Project] Created clean main.jsx")
     
@@ -1032,7 +1032,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                 async with aiohttp.ClientSession() as session:
                     try:
                         async with session.get(f"http://{container_name}:{port}", timeout=aiohttp.ClientTimeout(total=3)) as resp:
-                            if resp.status == 200:
+                        if resp.status == 200:
                                 text = await resp.text()
                                 # Basic sanity checks: index served and root exists or vite client present
                                 if '<div id="root"' in text or 'vite/client' in text or '/@vite/client' in text:
@@ -1338,11 +1338,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             await browser.close()
         
         return screenshots
-
+    
     async def _cleanup_react_project(self, temp_dir: str, container_name: str):
         """Clean up temporary files and containers"""
         print("[React Project] Cleaning up...")
-
+        
         # Stop and remove container
         if container_name:
             try:
