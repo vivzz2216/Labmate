@@ -14,7 +14,7 @@ RUN npm ci
 COPY frontend/ ./
 
 # Verify lib directory exists and show full directory structure
-RUN ls -la && echo "--- Checking for lib directory ---" && ls -la lib/ || echo "lib directory not found"
+RUN ls -la && echo "--- Checking for lib directory ---" && ls -la lib/ || echo "lib directory not found" && echo "--- Checking if lib exists as file ---" && find . -name "lib" -type d
 
 # Clean any existing build cache
 RUN rm -rf .next
