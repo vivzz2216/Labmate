@@ -1,6 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { apiService } from '@/lib/api'
 
 interface User {
@@ -26,15 +27,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
-    // Only run on client side
-    if (typeof window === 'undefined') {
-      setLoading(false)
-      return
-    }
-
     // Check if user is stored in localStorage
     const checkStoredUser = () => {
       try {
@@ -51,18 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Add a small delay to prevent flash
-    const timer = setTimeout(checkStoredUser, 100)
-    
-    // Fallback timeout to prevent infinite loading
-    const fallbackTimer = setTimeout(() => {
-      setLoading(false)
-    }, 2000)
-    
-    return () => {
-      clearTimeout(timer)
-      clearTimeout(fallbackTimer)
-    }
+    checkStoredUser()
   }, [])
 
   const signup = async (email: string, name: string, password: string) => {
@@ -74,7 +58,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('labmate_user', JSON.stringify(userData))
       setUser(userData)
       
-      // Don't redirect here - let the page component handle it
+      // Redirect to dashboard
+      router.push('/dashboard')
     } catch (error) {
       console.error('Signup failed:', error)
       throw error
@@ -92,7 +77,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('labmate_user', JSON.stringify(userData))
       setUser(userData)
       
-      // Don't redirect here - let the page component handle it
+      // Redirect to dashboard
+      router.push('/dashboard')
     } catch (error) {
       console.error('Login failed:', error)
       throw error
@@ -109,7 +95,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('labmate_user')
       setUser(null)
       
-      // Don't redirect here - let the page component handle it
+      // Redirect to homepage
+      router.push('/')
     } catch (error) {
       console.error('Signout failed:', error)
     } finally {
