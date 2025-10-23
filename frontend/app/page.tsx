@@ -33,15 +33,17 @@ import {
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [hasRedirected, setHasRedirected] = useState(false)
   const { user, loading } = useAuth()
   const router = useRouter()
 
-  // Redirect to dashboard if user is already authenticated
+  // Redirect to dashboard if user is already authenticated (only once)
   useEffect(() => {
-    if (!loading && user) {
+    if (!loading && user && !hasRedirected) {
+      setHasRedirected(true)
       router.push('/dashboard')
     }
-  }, [user, loading, router])
+  }, [user, loading, hasRedirected])
 
   const handleGetStarted = () => {
     setShowLoginModal(true)
@@ -56,6 +58,20 @@ export default function LandingPage() {
             <FileText className="w-4 h-4 text-white" />
           </div>
           <p className="text-white/80">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Prevent rendering if redirecting
+  if (hasRedirected) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3 mx-auto mb-4">
+            <FileText className="w-4 h-4 text-white" />
+          </div>
+          <p className="text-white/80">Redirecting to dashboard...</p>
         </div>
       </div>
     )
