@@ -31,11 +31,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve static frontend files
+# Serve static frontend files (Next.js export)
 frontend_path = "/app/frontend"
 if os.path.exists(frontend_path):
-    # Mount static frontend (Next.js export)
-    app.mount("/_next", StaticFiles(directory=frontend_path, html=True), name="frontend")
+    # Mount static frontend files
+    app.mount("/_next", StaticFiles(directory=f"{frontend_path}/_next"), name="next")
+    app.mount("/static", StaticFiles(directory=f"{frontend_path}/_next/static"), name="static")
 
 # Serve frontend for all non-API routes
 @app.get("/{path:path}")
