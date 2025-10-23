@@ -38,6 +38,11 @@ if os.path.exists(frontend_path):
     app.mount("/_next", StaticFiles(directory=f"{frontend_path}/_next"), name="next")
     app.mount("/static", StaticFiles(directory=f"{frontend_path}/_next/static"), name="static")
 
+# Serve specific static files from frontend root
+@app.get("/wavy_background.jpg")
+async def serve_wavy_background():
+    return FileResponse("/app/frontend/wavy_background.jpg")
+
 # Serve frontend for all non-API routes
 @app.get("/{path:path}")
 async def serve_frontend(path: str):
