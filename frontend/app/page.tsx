@@ -40,8 +40,13 @@ export default function LandingPage() {
   // Redirect to dashboard if user is already authenticated (only once)
   useEffect(() => {
     if (!loading && user && !hasRedirected) {
-      setHasRedirected(true)
-      router.push('/dashboard')
+      // Add a small delay to prevent race conditions
+      const redirectTimer = setTimeout(() => {
+        setHasRedirected(true)
+        router.push('/dashboard')
+      }, 100)
+      
+      return () => clearTimeout(redirectTimer)
     }
   }, [user, loading, hasRedirected])
 

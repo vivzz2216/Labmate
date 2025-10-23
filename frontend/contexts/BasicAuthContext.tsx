@@ -1,7 +1,6 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { apiService } from '@/lib/api'
 
 interface User {
@@ -28,7 +27,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
 
   useEffect(() => {
     // Only run on client side
@@ -76,8 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('labmate_user', JSON.stringify(userData))
       setUser(userData)
       
-      // Redirect to dashboard
-      router.push('/dashboard')
+      // Don't redirect here - let the page component handle it
     } catch (error) {
       console.error('Signup failed:', error)
       throw error
@@ -95,8 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('labmate_user', JSON.stringify(userData))
       setUser(userData)
       
-      // Redirect to dashboard
-      router.push('/dashboard')
+      // Don't redirect here - let the page component handle it
     } catch (error) {
       console.error('Login failed:', error)
       throw error

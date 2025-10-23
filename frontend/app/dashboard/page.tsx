@@ -34,7 +34,7 @@ export default function DashboardPage() {
     if (!loading && !user) {
       router.push('/')
     }
-  }, [user, loading, router])
+  }, [user, loading])
 
   // Show loading while checking authentication
   if (loading) {
