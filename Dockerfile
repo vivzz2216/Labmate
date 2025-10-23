@@ -24,7 +24,9 @@ RUN rm -rf .next
 RUN echo "--- Starting Next.js build ---" && \
     npm run build --verbose 2>&1 | tee build.log && \
     echo "--- Build completed successfully ---" && \
-    cat build.log
+    cat build.log && \
+    echo "--- Checking build exit code ---" && \
+    echo "Build exit code: $?"
 
 # Show build output and check for errors
 RUN echo "--- Build completed, checking output ---" && \
@@ -32,6 +34,8 @@ RUN echo "--- Build completed, checking output ---" && \
     cat build.log && \
     echo "--- Checking for errors in build log ---" && \
     grep -i "error\|failed\|warning" build.log || echo "No errors found in build log" && \
+    echo "--- Checking for TypeScript errors ---" && \
+    grep -i "typescript\|ts\|compilation" build.log || echo "No TypeScript errors found" && \
     echo "--- Current directory structure ---" && \
     ls -la && \
     echo "--- Checking for .next directory ---" && \
@@ -44,6 +48,10 @@ RUN echo "--- Final verification: .next directory ---" && \
     find . -name "*.js" -o -name "*.css" -o -name "*.html" | head -10 && \
     echo "--- Checking for any error logs ---" && \
     find . -name "*.log" -o -name "*.error" | head -5 && \
+    echo "--- Checking Next.js version ---" && \
+    npm list next && \
+    echo "--- Checking if Next.js is properly installed ---" && \
+    npx next --version && \
     exit 1)
 
 # Stage 2: Build Backend (Python + FastAPI)
