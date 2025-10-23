@@ -26,7 +26,9 @@ RUN echo "--- Starting Next.js build ---" && \
     echo "--- Build completed successfully ---" && \
     cat build.log && \
     echo "--- Checking build exit code ---" && \
-    echo "Build exit code: $?"
+    echo "Build exit code: $?" && \
+    echo "--- Checking if .next directory was created during build ---" && \
+    ls -la .next || echo ".next directory not found during build!"
 
 # Show build output and check for errors
 RUN echo "--- Build completed, checking output ---" && \
@@ -52,6 +54,14 @@ RUN echo "--- Final verification: .next directory ---" && \
     npm list next && \
     echo "--- Checking if Next.js is properly installed ---" && \
     npx next --version && \
+    echo "--- Checking Next.js configuration ---" && \
+    cat next.config.js && \
+    echo "--- Checking package.json build script ---" && \
+    cat package.json | grep -A 5 -B 5 "build" && \
+    echo "--- Trying to run Next.js build manually ---" && \
+    npx next build --verbose && \
+    echo "--- Checking if .next was created after manual build ---" && \
+    ls -la .next || echo ".next still not found after manual build" && \
     exit 1)
 
 # Stage 2: Build Backend (Python + FastAPI)
