@@ -49,61 +49,57 @@ if os.path.exists(frontend_path):
 # Serve frontend for all non-API routes
 @app.get("/{path:path}")
 async def serve_frontend(path: str):
-    # Don't serve frontend for API routes
-    if path.startswith("api/") or path.startswith("health") or path.startswith("docs") or path.startswith("uploads") or path.startswith("screenshots") or path.startswith("reports") or path.startswith("public"):
-        return {"message": "Not found"}
-    
-    # Serve frontend index.html for all other routes
-    frontend_index = "/app/frontend/index.html"
-    if os.path.exists(frontend_index):
-        try:
-            # Read the index.html and inject a small client-side shim that
-            # prevents development HMR/WebSocket code from forcing reloads.
-            # This is a safe mitigation for deployed sites that accidentally
-            # include dev assets (HMR client). It avoids an infinite reload loop
-            # while you rebuild the frontend for production.
-            with open(frontend_index, 'r', encoding='utf-8') as f:
-                html = f.read()
+        # Don't serve frontend for API routes
+        if path.startswith("api/") or path.startswith("health") or path.startswith("docs") or path.startswith("uploads") or path.startswith("screenshots") or path.startswith("reports") or path.startswith("public"):
+                return {"message": "Not found"}
 
-            # Script to stub WebSocket and prevent HMR reload behavior.
-            shim = (
-                "<script>" 
-                "(function(){\n"
-                "  try{\n"
-                "    // If a dev HMR client is present it will try to open a WebSocket
-                ";\n"
-                "    // Stub the WebSocket constructor to a noop to avoid auto-reloads.\n"
-                "    if(window.WebSocket){\n"
-                "      var OriginalWebSocket = window.WebSocket;\n"
-                "      window.WebSocket = function(){\n"
-                "        return {\n"
-                "          addEventListener: function(){},\n"
-                "          removeEventListener: function(){},\n"
-                "          send: function(){},\n"
-                "          close: function(){},\n"
-                "          onopen: null, onmessage: null, onclose: null, onerror: null\n"
-                "        };\n"
-                "      };\n"
-                "      // preserve reference if needed elsewhere\n"
-                "      window.__LABMATE_STUBBED_WS = true;\n"
-                "      window.__LABMATE_ORIGINAL_WS = OriginalWebSocket;\n"
-                "    }\n"
-                "  }catch(e){/* ignore shim errors */}\n"
-                "})();</script>"
-            )
+        # Serve frontend index.html for all other routes
+        frontend_index = "/app/frontend/index.html"
+        if os.path.exists(frontend_index):
+                try:
+                        # Read the index.html and inject a small client-side shim that
+                        # prevents development HMR/WebSocket code from forcing reloads.
+                        # This is a safe mitigation for deployed sites that accidentally
+                        # include dev assets (HMR client). It avoids an infinite reload loop
+                        # while you rebuild the frontend for production.
+                        with open(frontend_index, 'r', encoding='utf-8') as f:
+                                html = f.read()
 
-            # Inject shim before closing </head> if present, otherwise prepend
-            if "</head>" in html:
-                html = html.replace("</head>", shim + "</head>")
-            else:
-                html = shim + html
+                        # Script to stub WebSocket and prevent HMR reload behavior.
+                        shim = '''<script>(function(){
+    try{
+        // If a dev HMR client is present it will try to open a WebSocket
+        // Stub the WebSocket constructor to a noop to avoid auto-reloads.
+        if(window.WebSocket){
+            var OriginalWebSocket = window.WebSocket;
+            window.WebSocket = function(){
+                return {
+                    addEventListener: function(){},
+                    removeEventListener: function(){},
+                    send: function(){},
+                    close: function(){},
+                    onopen: null, onmessage: null, onclose: null, onerror: null
+                };
+            };
+            // preserve reference if needed elsewhere
+            window.__LABMATE_STUBBED_WS = true;
+            window.__LABMATE_ORIGINAL_WS = OriginalWebSocket;
+        }
+    }catch(e){/* ignore shim errors */}
+})();</script>'''
 
-            return HTMLResponse(content=html, status_code=200)
-        except Exception:
-            # Fallback to static file if anything goes wrong
-            return FileResponse(frontend_index)
-    else:
-        return {"message": "Frontend not built. Please build the frontend first."}
+                        # Inject shim before closing </head> if present, otherwise prepend
+                        if "</head>" in html:
+                                html = html.replace("</head>", shim + "</head>")
+                        else:
+                                html = shim + html
+
+                        return HTMLResponse(content=html, status_code=200)
+                except Exception:
+                        # Fallback to static file if anything goes wrong
+                        return FileResponse(frontend_index)
+        else:
+                return {"message": "Frontend not built. Please build the frontend first."}
 
 # Health check endpoint
 @app.get("/health")

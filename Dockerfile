@@ -5,8 +5,9 @@ FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
 
 # Copy package files and install dependencies
-COPY frontend/package*.json.bak ./
-RUN mv package.json.bak package.json && npm install
+# Use the real package.json files from the frontend directory (there is no .bak file)
+COPY frontend/package*.json ./
+RUN npm install --no-audit --no-fund
 
 # Copy all frontend source (exclude node_modules and .next)
 COPY frontend/next.config.js ./
