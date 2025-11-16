@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.gzip import GZipMiddleware
 import os
 from .config import settings
@@ -56,7 +56,52 @@ async def serve_frontend(path: str):
     # Serve frontend index.html for all other routes
     frontend_index = "/app/frontend/index.html"
     if os.path.exists(frontend_index):
-        return FileResponse(frontend_index)
+        try:
+            # Read the index.html and inject a small client-side shim that
+            # prevents development HMR/WebSocket code from forcing reloads.
+            # This is a safe mitigation for deployed sites that accidentally
+            # include dev assets (HMR client). It avoids an infinite reload loop
+            # while you rebuild the frontend for production.
+            with open(frontend_index, 'r', encoding='utf-8') as f:
+                html = f.read()
+
+            # Script to stub WebSocket and prevent HMR reload behavior.
+            shim = (
+                "<script>" 
+                "(function(){\n"
+                "  try{\n"
+                "    // If a dev HMR client is present it will try to open a WebSocket
+                ";\n"
+                "    // Stub the WebSocket constructor to a noop to avoid auto-reloads.\n"
+                "    if(window.WebSocket){\n"
+                "      var OriginalWebSocket = window.WebSocket;\n"
+                "      window.WebSocket = function(){\n"
+                "        return {\n"
+                "          addEventListener: function(){},\n"
+                "          removeEventListener: function(){},\n"
+                "          send: function(){},\n"
+                "          close: function(){},\n"
+                "          onopen: null, onmessage: null, onclose: null, onerror: null\n"
+                "        };\n"
+                "      };\n"
+                "      // preserve reference if needed elsewhere\n"
+                "      window.__LABMATE_STUBBED_WS = true;\n"
+                "      window.__LABMATE_ORIGINAL_WS = OriginalWebSocket;\n"
+                "    }\n"
+                "  }catch(e){/* ignore shim errors */}\n"
+                "})();</script>"
+            )
+
+            # Inject shim before closing </head> if present, otherwise prepend
+            if "</head>" in html:
+                html = html.replace("</head>", shim + "</head>")
+            else:
+                html = shim + html
+
+            return HTMLResponse(content=html, status_code=200)
+        except Exception:
+            # Fallback to static file if anything goes wrong
+            return FileResponse(frontend_index)
     else:
         return {"message": "Frontend not built. Please build the frontend first."}
 
