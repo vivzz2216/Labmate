@@ -49,6 +49,14 @@ class Settings(BaseSettings):
     REACT_MULTI_ROUTE_CAPTURE: bool = True
     REACT_DEFAULT_ROUTES: list = ["/", "/about", "/contact"]
     
+    # Redis settings for caching
+    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    REDIS_CACHE_TTL: int = 3600  # 1 hour default cache TTL
+    
+    # Rate limiting settings
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_PER_MINUTE: int = 60  # Requests per minute per IP
+    
     class Config:
         env_file = ".env"
 

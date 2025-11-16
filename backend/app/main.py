@@ -2,10 +2,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.middleware.gzip import GZipMiddleware
 import os
 from .config import settings
 from .database import engine, Base
 from .routers import upload, parse, run, compose, download, analyze, tasks, assignments, basic_auth
+from .middleware.rate_limit import RateLimitMiddleware
 
 # Create database tables with error handling
 try:
@@ -21,6 +23,12 @@ app = FastAPI(
     description="Automated lab assignment processing platform",
     version="1.0.0"
 )
+
+# Add compression middleware
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+# Add rate limiting middleware
+app.add_middleware(RateLimitMiddleware)
 
 # Configure CORS
 app.add_middleware(
@@ -55,7 +63,47 @@ async def serve_frontend(path: str):
 # Health check endpoint
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "message": "LabMate API is running"}
+    from .monitoring import performance_monitor
+    from .cache import redis_client
+    
+    # Check Redis connection
+    redis_status = "healthy"
+    try:
+        if redis_client:
+            redis_client.ping()
+        else:
+            redis_status = "not_configured"
+    except Exception:
+        redis_status = "unhealthy"
+    
+    # Check database connection
+    db_status = "healthy"
+    try:
+        from .database import engine
+        from sqlalchemy import text
+        if engine:
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+        else:
+            db_status = "not_configured"
+    except Exception:
+        db_status = "unhealthy"
+    
+    metrics = performance_monitor.get_metrics()
+    
+    return {
+        "status": "healthy" if redis_status == "healthy" and db_status == "healthy" else "degraded",
+        "message": "LabMate API is running",
+        "services": {
+            "database": db_status,
+            "redis": redis_status
+        },
+        "metrics": {
+            "total_requests": metrics["requests_total"],
+            "avg_response_time": f"{metrics['avg_response_time']:.3f}s",
+            "error_rate": f"{metrics['error_rate']*100:.2f}%"
+        }
+    }
 
 # Root endpoint
 @app.get("/")

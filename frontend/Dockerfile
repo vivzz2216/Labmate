@@ -14,11 +14,11 @@ FROM mirror.gcr.io/library/node:18-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-COPY package*.json ./
-RUN npm ci --omit=dev
-COPY --from=builder /app/.next ./.next
+# Copy the static export output
+COPY --from=builder /app/out ./out
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.js ./next.config.js
+# Install serve to serve static files
+RUN npm install -g serve@latest
 
-EXPOSE $PORT
-CMD ["npm", "start"]
+EXPOSE 3000
+CMD ["serve", "-s", "out", "-l", "3000", "--no-clipboard"]

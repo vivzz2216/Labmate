@@ -12,12 +12,19 @@ if not settings.DATABASE_URL:
     SessionLocal = None
     Base = declarative_base()
 else:
-    # Create database engine with Railway-optimized settings
+    # Create database engine with optimized settings for 1000+ users
     engine = create_engine(
         settings.DATABASE_URL,
-        pool_pre_ping=True,  # Verify connections before use
-        pool_recycle=300,    # Recycle connections every 5 minutes
-        echo=False           # Set to True for debugging
+        pool_pre_ping=True,          # Verify connections before use
+        pool_recycle=300,            # Recycle connections every 5 minutes
+        pool_size=20,                # Number of connections to maintain
+        max_overflow=40,             # Maximum overflow connections
+        pool_timeout=30,             # Timeout for getting connection from pool
+        echo=False,                  # Set to True for debugging
+        connect_args={
+            "connect_timeout": 10,   # Connection timeout
+            "application_name": "labmate_api"
+        }
     )
     
     # Create session factory
